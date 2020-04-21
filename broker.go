@@ -118,7 +118,6 @@ func (b *Broker) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 			return nil, err
 		}
 	}
-
 	req, err := http.NewRequest(method, u.String(), buf)
 	if err != nil {
 		return nil, err
@@ -165,13 +164,13 @@ func (b *Broker) fetchRemoteItemsPerPage(page int) ([]*article, bool, error) {
 func (b *Broker) LocalPath(article *article) string {
 	extension := ".md"
 	paths := []string{b.BaseDir()}
-	paths = append(paths, article.Item.Date(), article.ID+extension)
+	paths = append(paths, DateFormat(article.Item.CreatedAt), article.ID+extension)
 	return filepath.Join(paths...)
 }
 
 func (b *Broker) StoreFresh(localArticles map[string]*article, remoteArticle *article) (bool, error) {
 	var localLastModified time.Time
-	path := filepath.Join(b.BaseDir(), remoteArticle.Item.Date(), remoteArticle.ID+defaultExtension)
+	path := filepath.Join(b.BaseDir(), DateFormat(remoteArticle.Item.CreatedAt), remoteArticle.ID+defaultExtension)
 
 	a, exists := localArticles[remoteArticle.ID]
 	if exists {
@@ -226,7 +225,7 @@ func (b *Broker) convertItemArticle(items []*Item) []*article {
 			ArticleHeader: &ArticleHeader{
 				ID:      items[i].ID,
 				Title:   items[i].Title,
-				Tags:    items[i].AllTags(),
+				Tags:    UnmarshalTag(items[i].Tags),
 				Author:  items[i].User.Name,
 				Private: items[i].Private,
 			},
@@ -234,4 +233,54 @@ func (b *Broker) convertItemArticle(items []*Item) []*article {
 		}
 	}
 	return articles
+}
+
+func (b *Broker) PostArticle(post *PostItem) error {
+	body := &PostItem{
+		Body:    post.Body,
+		Private: post.Private,
+		Tags:    post.Tags,
+		Title:   post.Title,
+	}
+	req, err := b.NewRequest(http.MethodPost, "api/v2/items", body)
+	if err != nil {
+		return err
+	}
+
+	resp, err := b.do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		return errors.New(resp.Status)
+	}
+
+	var r PostItemResult
+	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
+		return fmt.Errorf("json decode: %w", err)
+	}
+	logf("post", "URL: %s", r.URL)
+
+	article := &article{
+		ArticleHeader: &ArticleHeader{
+			ID:      r.ID,
+			Title:   r.Title,
+			Tags:    UnmarshalTag(r.Tags),
+			Author:  r.User.Name,
+			Private: r.Private,
+		},
+		Item: &Item{
+			Body:      r.Body,
+			CreatedAt: r.CreatedAt,
+			UpdatedAt: r.UpdatedAt,
+		},
+	}
+
+	path := filepath.Join(b.BaseDir(), r.CreatedAt.Format("20060102"), article.ID+defaultExtension)
+	if err := b.Store(path, article); err != nil {
+		return err
+	}
+	return nil
 }

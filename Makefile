@@ -24,13 +24,16 @@ lint:
 clean:
 	rm -rf $(BIN)
 	go clean
-	rm -rf testdata/output
 
 #### Local Test
 .PHONY: pull
 pull: clean build
-	rm -rf testdata/output
+	rm -rf testdata/output/pull
 	$(BIN) pull
+
+.PHONY: post
+post: build
+	$(BIN) post --path ./testdata/output/post/test_article.md --title first_article_2 --tag Go:1.14 --private true
 
 .PHONY: pull-only
 pull-only: build

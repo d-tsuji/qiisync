@@ -29,14 +29,53 @@ type User struct {
 	Name string `json:"name"`
 }
 
-func (item *Item) Date() string {
-	return item.CreatedAt.Format("20060102")
+type PostItem struct {
+	Body     string `json:"body"`
+	Private  bool   `json:"private"`
+	Tags     []*Tag `json:"tags"`
+	Title    string `json:"title"`
+	FilePath string
 }
 
-func (item *Item) AllTags() string {
-	tags := make([]string, len(item.Tags))
-	for i := range item.Tags {
-		tags[i] = strconv.Quote(item.Tags[i].Name)
+type PostItemResult struct {
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"created_at"`
+	ID        string    `json:"id"`
+	Private   bool      `json:"private"`
+	Tags      []*Tag    `json:"tags"`
+	Title     string    `json:"title"`
+	UpdatedAt time.Time `json:"updated_at"`
+	URL       string    `json:"url"`
+	User      User      `json:"user"`
+}
+
+func DateFormat(time time.Time) string {
+	return time.Format("20060102")
+}
+
+func UnmarshalTag(Tags []*Tag) string {
+	// TODO: Convert to a string, including the version of the tag.
+	tags := make([]string, len(Tags))
+	for i := range Tags {
+		tags[i] = strconv.Quote(Tags[i].Name)
 	}
 	return strings.Join(tags, ",")
+}
+
+func MarshalTag(tagString string) []*Tag {
+	var tags []*Tag
+	for _, v := range strings.Split(tagString, ",") {
+		tag := strings.Split(v, ":")
+		// Encoding a nil slice into a JSON will result in a null slice,
+		// so we define an empty slice.
+		version := []string{}
+		for i := 1; i < len(tag); i++ {
+			version = append(version, tag[i])
+		}
+		tags = append(tags, &Tag{
+			Name:     tag[0],
+			Versions: version,
+		})
+	}
+	return tags
 }
