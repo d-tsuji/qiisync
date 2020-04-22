@@ -393,6 +393,127 @@ func TestLocalPath(t *testing.T) {
 	}
 }
 
+func TestStoreFresh(t *testing.T) {
+	type fields struct {
+		config  *config
+		BaseURL *url.URL
+	}
+	type args struct {
+		localArticles map[string]*article
+		remoteArticle *article
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    bool
+		wantErr bool
+	}{
+		{
+			name: "fresh",
+			fields: fields{
+				config: &config{
+					Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
+					Local: localConfig{
+						Dir: "./testdata/broker",
+					},
+				},
+			},
+			args: args{
+				localArticles: map[string]*article{
+					"1234567890abcdefghij": {
+						ArticleHeader: &ArticleHeader{
+							ID:      "1234567890abcdefghij",
+							Title:   "はじめてのGo",
+							Tags:    "Go:1.14",
+							Author:  "d-tsuji",
+							Private: false,
+						},
+						Item: &Item{
+							Body:      "# はじめに\n\nはじめてのGoです\n",
+							UpdatedAt: time.Date(2020, 4, 22, 16, 59, 59, 0, time.UTC),
+						},
+						FilePath: filepath.Join("testdata", "broker", "TestStoreFresh.md"),
+					},
+				},
+				remoteArticle: &article{
+					ArticleHeader: &ArticleHeader{
+						ID:      "1234567890abcdefghij",
+						Title:   "はじめてのGo",
+						Tags:    "Go:1.14",
+						Author:  "d-tsuji",
+						Private: false,
+					},
+					Item: &Item{
+						Body:      "# はじめに\n\nはじめてのGoです\n",
+						UpdatedAt: time.Date(2020, 4, 22, 17, 00, 00, 0, time.UTC),
+					},
+				},
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "not_fresh",
+			fields: fields{
+				config: &config{
+					Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
+					Local: localConfig{
+						Dir: "./testdata/broker",
+					},
+				},
+			},
+			args: args{
+				localArticles: map[string]*article{
+					"1234567890abcdefghij": {
+						ArticleHeader: &ArticleHeader{
+							ID:      "1234567890abcdefghij",
+							Title:   "はじめてのGo",
+							Tags:    "Go:1.14",
+							Author:  "d-tsuji",
+							Private: false,
+						},
+						Item: &Item{
+							Body:      "# はじめに\n\nはじめてのGoです\n",
+							UpdatedAt: time.Date(2020, 4, 22, 16, 59, 59, 0, time.UTC),
+						},
+						FilePath: filepath.Join("testdata", "broker", "TestStoreFresh.md"),
+					},
+				},
+				remoteArticle: &article{
+					ArticleHeader: &ArticleHeader{
+						ID:      "1234567890abcdefghij",
+						Title:   "はじめてのGo",
+						Tags:    "Go:1.14",
+						Author:  "d-tsuji",
+						Private: false,
+					},
+					Item: &Item{
+						Body:      "# はじめに\n\nはじめてのGoです\n",
+						UpdatedAt: time.Date(2020, 4, 22, 16, 59, 58, 0, time.UTC),
+					},
+				},
+			},
+			want:    false,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			baseURL, _ := url.Parse(tt.fields.config.Local.Dir)
+			b := &Broker{config: tt.fields.config, BaseURL: baseURL}
+
+			got, err := b.StoreFresh(tt.args.localArticles, tt.args.remoteArticle)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("StoreFresh() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("StoreFresh() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 func TestStore(t *testing.T) {
 	tempDir, err := ioutil.TempDir("testdata", "temp")
 	if err != nil {
@@ -535,6 +656,89 @@ func TestPostArticle(t *testing.T) {
 	}
 }
 
+func TestPatchArticle(t *testing.T) {
+	b, mux, _, teardown := setup()
+	t.Cleanup(func() {
+		teardown()
+		if err := os.RemoveAll(b.BaseDir()); err != nil {
+			t.Errorf("remove tempDir: %v", err)
+		}
+	})
+
+	mux.HandleFunc("/api/v2/items/c686397e4a0f4f11683d", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "PATCH")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, `
+					{
+						"rendered_body": "<h1>Example</h1>",
+						"body": "# Example",
+						"coediting": false,
+						"comments_count": 100,
+						"created_at": "2000-01-01T00:00:00+00:00",
+						"group": {
+							"created_at": "2000-01-01T00:00:00+00:00",
+							"id": 1,
+							"name": "Dev",
+							"private": false,
+							"updated_at": "2000-01-01T00:00:00+00:00",
+							"url_name": "dev"
+						},
+						"id": "c686397e4a0f4f11683d",
+						"likes_count": 100,
+						"private": false,
+						"reactions_count": 100,
+						"tags": [
+							{
+								"name": "Ruby",
+								"versions": [
+									"0.0.1"
+								]
+							}
+						],
+						"title": "Example title",
+						"updated_at": "2000-01-01T00:00:00+00:00",
+						"url": "https://localhost/Test/items/c686397e4a0f4f11683d",
+						"user": {
+							"description": "Hello, world.",
+							"facebook_id": "qiita",
+							"followees_count": 100,
+							"followers_count": 200,
+							"github_login_name": "qiitan",
+							"id": "qiita",
+							"items_count": 300,
+							"linkedin_id": "qiita",
+							"location": "Tokyo, Japan",
+							"name": "Qiita キータ",
+							"organization": "Increments Inc",
+							"permanent_id": 1,
+							"profile_image_url": "https://s3-ap-northeast-1.amazonaws.com/qiita-image-store/0/88/ccf90b557a406157dbb9d2d7e543dae384dbb561/large.png?1575443439",
+							"team_only": false,
+							"twitter_screen_name": "qiita",
+							"website_url": "https://qiita.com"
+						},
+						"page_views_count": 100
+					}
+`)
+	})
+
+	err := b.PatchArticle(&PostItem{
+		Body:    "# Example",
+		Private: false,
+		Tags: []*Tag{
+			{
+				Name:     "Ruby",
+				Versions: []string{"0.0.1"},
+			},
+		},
+		Title: "Example title",
+		ID:    "c686397e4a0f4f11683d",
+	})
+	if err != nil {
+		t.Errorf("PatchArticle(): %v", err)
+		return
+	}
+}
+
 func TestBroker_fetchLocalArticles(t *testing.T) {
 	updateAt := time.Date(2020, 4, 22, 16, 59, 59, 0, time.UTC)
 
@@ -594,6 +798,125 @@ func TestBroker_fetchLocalArticles(t *testing.T) {
 	}
 }
 
+func TestUploadFresh(t *testing.T) {
+	tests := []struct {
+		name         string
+		localArticle *article
+		want         bool
+		wantErr      bool
+	}{
+		{
+			name: "fresh",
+			localArticle: &article{
+				ArticleHeader: &ArticleHeader{
+					ID:      "c686397e4a0f4f11683d",
+					Title:   "Update title",
+					Tags:    "Go:1.14",
+					Author:  "d-tsuji",
+					Private: false,
+				},
+				Item: &Item{
+					Body:      "# Update Example",
+					UpdatedAt: time.Date(2020, 4, 23, 05, 41, 36, 0, time.UTC),
+				},
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "not_fresh",
+			localArticle: &article{
+				ArticleHeader: &ArticleHeader{
+					ID:      "c686397e4a0f4f11683d",
+					Title:   "Update title",
+					Tags:    "Go:1.14",
+					Author:  "d-tsuji",
+					Private: false,
+				},
+				Item: &Item{
+					Body:      "# Update Example",
+					UpdatedAt: time.Date(2020, 4, 23, 05, 41, 34, 0, time.UTC),
+				},
+			},
+			want:    false,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			b, mux, _, teardown := setup()
+			t.Cleanup(func() {
+				teardown()
+			})
+
+			mux.HandleFunc("/api/v2/items/c686397e4a0f4f11683d", func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case "GET":
+					fmt.Fprint(w, `
+					{
+						"rendered_body": "<h1>Example</h1>",
+						"body": "# Example",
+						"created_at": "2020-04-23T05:41:35+00:00",
+						"id": "c686397e4a0f4f11683d",
+						"private": false,
+						"tags": [
+							{
+								"name": "Ruby",
+								"versions": [
+									"0.0.1"
+								]
+							}
+						],
+						"title": "Example title",
+						"updated_at": "2020-04-23T05:41:35+00:00",
+						"url": "https://localhost/Test/items/c686397e4a0f4f11683d",
+						"user": {
+							"id": "qiita",
+							"name": "Qiita キータ"
+						}
+					}
+`)
+				case "PATCH":
+					fmt.Fprint(w, `
+					{
+						"rendered_body": "<h1>Example</h1>",
+						"body": "# Update Example",
+						"created_at": "2020-04-23T05:41:35+00:00",
+						"id": "c686397e4a0f4f11683d",
+						"private": false,
+						"tags": [
+							{
+								"name": "Go",
+								"versions": [
+									"1.14"
+								]
+							}
+						],
+						"title": "Update title",
+						"updated_at": "2020-04-23T05:41:36+00:00",
+						"url": "https://localhost/Test/items/c686397e4a0f4f11683d",
+						"user": {
+							"id": "d-tsuji",
+							"name": "d-tsuji"
+						}
+					}
+`)
+				}
+			})
+
+			got, err := b.UploadFresh(tt.localArticle)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UploadFresh() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("UploadFresh() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func setup() (broker *Broker, mux *http.ServeMux, serverURL string, teardown func()) {
 	mux = http.NewServeMux()
 
@@ -603,7 +926,7 @@ func setup() (broker *Broker, mux *http.ServeMux, serverURL string, teardown fun
 	server := httptest.NewServer(apiHandler)
 
 	broker = NewBroker(&config{
-		Qiita: qiitaConfig{Token: "1234567890abcdefghij"},
+		Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
 		Local: localConfig{
 			Dir: "./testdata/broker",
 		},

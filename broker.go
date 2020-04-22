@@ -310,6 +310,29 @@ func (b *Broker) PostArticle(body *PostItem) error {
 	return nil
 }
 
+func (b *Broker) PatchArticle(body *PostItem) error {
+	if body.ID == "" {
+		return errors.New("ID is required")
+	}
+	u := fmt.Sprintf("api/v2/items/%s", body.ID)
+	req, err := b.NewRequest(http.MethodPatch, u, body)
+	if err != nil {
+		return err
+	}
+
+	resp, err := b.do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(resp.Status)
+	}
+	logf("post", "fresh article (title: %s)", body.Title)
+	return nil
+}
+
 func (b *Broker) UploadFresh(a *article) (bool, error) {
 	ra, err := b.fetchRemoteArticle(a)
 	if err != nil {
@@ -326,25 +349,11 @@ func (b *Broker) UploadFresh(a *article) (bool, error) {
 		Private: a.Private,
 		Tags:    MarshalTag(a.Tags),
 		Title:   a.Title,
-	}
-	for _, v := range MarshalTag(a.Tags) {
-		fmt.Printf("%#v\n", v)
+		ID:      a.ID,
 	}
 
-	u := fmt.Sprintf("api/v2/items/%s", a.ID)
-	req, err := b.NewRequest(http.MethodPatch, u, body)
-	if err != nil {
+	if err := b.PatchArticle(body); err != nil {
 		return false, err
-	}
-
-	resp, err := b.do(req)
-	if err != nil {
-		return false, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return false, errors.New(resp.Status)
 	}
 
 	return true, nil

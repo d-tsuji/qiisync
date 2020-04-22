@@ -35,6 +35,7 @@ type PostItem struct {
 	Private  bool   `json:"private"`
 	Tags     []*Tag `json:"tags"`
 	Title    string `json:"title"`
+	ID       string
 	FilePath string
 }
 

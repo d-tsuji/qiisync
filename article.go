@@ -63,7 +63,7 @@ func articleFromFile(filepath string) (*article, error) {
 	if !isNew {
 		c := delimReg.Split(content, 3)
 		if len(c) != 3 || c[0] != "" {
-			return nil, fmt.Errorf("entry format is invalid")
+			return nil, fmt.Errorf("article format is invalid")
 		}
 
 		if err := yaml.Unmarshal([]byte(c[1]), &ah); err != nil {
