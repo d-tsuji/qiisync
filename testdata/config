@@ -1,0 +1,5 @@
+[qiita]
+api_token = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+[local]
+base_dir = "./testdata/test"

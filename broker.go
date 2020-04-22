@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	defaultBaseURL   = "https://qiita.com/"
-	itemsPerPage     = 20
-	defaultExtension = ".md"
+	defaultBaseURL      = "https://qiita.com/"
+	defaultItemsPerPage = 20
+	defaultExtension    = ".md"
 )
 
 type Broker struct {
@@ -83,7 +83,7 @@ func (b *Broker) fetchRemoteArticles() ([]*article, error) {
 }
 
 func (b *Broker) fetchRemoteItemsPerPage(page int) ([]*article, bool, error) {
-	u := fmt.Sprintf("api/v2/authenticated_user/items?page=%d&per_page=%d", page, itemsPerPage)
+	u := fmt.Sprintf("api/v2/authenticated_user/items?page=%d&per_page=%d", page, defaultItemsPerPage)
 	req, err := b.NewRequest(http.MethodGet, u, nil)
 	if err != nil {
 		return nil, false, err
@@ -109,7 +109,7 @@ func (b *Broker) fetchRemoteItemsPerPage(page int) ([]*article, bool, error) {
 		return nil, false, err
 	}
 
-	return b.convertItemsArticles(items), itemsPerPage*page < total, nil
+	return b.convertItemsArticles(items), defaultItemsPerPage*page < total, nil
 }
 
 func (b *Broker) fetchLocalArticles() (articles map[string]*article, err error) {

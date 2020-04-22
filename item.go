@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+const defaultDataFormat = "20060102"
+
 type Item struct {
 	ID           string    `json:"id"`
 	URL          string    `json:"url"`
@@ -49,15 +51,14 @@ type PostItemResult struct {
 }
 
 func DateFormat(time time.Time) string {
-	return time.Format("20060102")
+	return time.Format(defaultDataFormat)
 }
 
 func UnmarshalTag(Tags []*Tag) string {
-	// TODO: Convert to a string, including the version of the tag.
 	tags := make([]string, len(Tags))
 	for i := range Tags {
 		tags[i] = Tags[i].Name
-		for len(Tags[i].Versions) >= 1 {
+		if len(Tags[i].Versions) >= 1 {
 			tags[i] += ":" + strings.Join(Tags[i].Versions, ":")
 		}
 	}

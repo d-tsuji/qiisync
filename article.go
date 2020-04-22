@@ -11,6 +11,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var delimReg = regexp.MustCompile(`---\n+`)
+
 type ArticleHeader struct {
 	ID      string `yaml:"ID"`
 	Title   string `yaml:"Title"`
@@ -25,19 +27,6 @@ type article struct {
 	FilePath string
 }
 
-func (a *article) FullContent() (string, error) {
-	header, err := a.HeaderString()
-	if err != nil {
-		return "", nil
-	}
-	c := header + a.Item.Body
-	if !strings.HasSuffix(c, "\n") {
-		// fill newline for suppressing diff "No newline at end of file"
-		c += "\n"
-	}
-	return c, nil
-}
-
 func (a *article) HeaderString() (string, error) {
 	d, err := yaml.Marshal(a.ArticleHeader)
 	if err != nil {
@@ -50,7 +39,18 @@ func (a *article) HeaderString() (string, error) {
 	return strings.Join(headers, "\n") + "---\n\n", nil
 }
 
-var delimReg = regexp.MustCompile(`---\n+`)
+func (a *article) FullContent() (string, error) {
+	header, err := a.HeaderString()
+	if err != nil {
+		return "", nil
+	}
+	c := header + a.Item.Body
+	if !strings.HasSuffix(c, "\n") {
+		// fill newline for suppressing diff "No newline at end of file"
+		c += "\n"
+	}
+	return c, nil
+}
 
 func articleFromFile(filepath string) (*article, error) {
 	b, err := ioutil.ReadFile(filepath)
