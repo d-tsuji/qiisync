@@ -16,7 +16,6 @@ func main() {
 		commandPull,
 		commandPost,
 		commandUpload,
-		//commandList,
 	}
 	app.Version = fmt.Sprintf("%s (%s)", version, revision)
 	err := app.Run(os.Args)
