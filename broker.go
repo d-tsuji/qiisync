@@ -39,6 +39,33 @@ func (b *Broker) do(req *http.Request) (*http.Response, error) {
 	return http.DefaultClient.Do(req)
 }
 
+func (b *Broker) fetchRemoteArticle(a *article) (*article, error) {
+	if a.ID == "" {
+		return nil, errors.New("article ID is required")
+	}
+	u := fmt.Sprintf("api/v2/items/%s", a.ID)
+	req, err := b.NewRequest(http.MethodGet, u, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := b.do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.Status)
+	}
+
+	var item Item
+	if err := json.NewDecoder(resp.Body).Decode(&item); err != nil {
+		return nil, err
+	}
+
+	return b.convertItemsArticle(&item), nil
+}
+
 func (b *Broker) fetchRemoteArticles() ([]*article, error) {
 	var articles []*article
 	for i := 1; ; i++ {
@@ -53,6 +80,36 @@ func (b *Broker) fetchRemoteArticles() ([]*article, error) {
 		}
 	}
 	return articles, nil
+}
+
+func (b *Broker) fetchRemoteItemsPerPage(page int) ([]*article, bool, error) {
+	u := fmt.Sprintf("api/v2/authenticated_user/items?page=%d&per_page=%d", page, itemsPerPage)
+	req, err := b.NewRequest(http.MethodGet, u, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	resp, err := b.do(req)
+	if err != nil {
+		return nil, false, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, false, errors.New(resp.Status)
+	}
+
+	var items []*Item
+	if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
+		return nil, false, err
+	}
+
+	total, err := strconv.Atoi(resp.Header.Get("Total-Count"))
+	if err != nil {
+		return nil, false, err
+	}
+
+	return b.convertItemsArticles(items), itemsPerPage*page < total, nil
 }
 
 func (b *Broker) fetchLocalArticles() (articles map[string]*article, err error) {
@@ -131,36 +188,6 @@ func (b *Broker) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 	return req, nil
 }
 
-func (b *Broker) fetchRemoteItemsPerPage(page int) ([]*article, bool, error) {
-	u := fmt.Sprintf("api/v2/authenticated_user/items?page=%d&per_page=%d", page, itemsPerPage)
-	req, err := b.NewRequest(http.MethodGet, u, nil)
-	if err != nil {
-		return nil, false, err
-	}
-
-	resp, err := b.do(req)
-	if err != nil {
-		return nil, false, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, false, errors.New(resp.Status)
-	}
-
-	var items []*Item
-	if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
-		return nil, false, err
-	}
-
-	total, err := strconv.Atoi(resp.Header.Get("Total-Count"))
-	if err != nil {
-		return nil, false, err
-	}
-
-	return b.convertItemArticle(items), itemsPerPage*page < total, nil
-}
-
 func (b *Broker) LocalPath(article *article) string {
 	extension := ".md"
 	paths := []string{b.BaseDir()}
@@ -218,30 +245,28 @@ func (b *Broker) Store(path string, article *article) error {
 	return os.Chtimes(path, article.Item.UpdatedAt, article.Item.UpdatedAt)
 }
 
-func (b *Broker) convertItemArticle(items []*Item) []*article {
+func (b *Broker) convertItemsArticles(items []*Item) []*article {
 	articles := make([]*article, len(items))
 	for i := range items {
-		articles[i] = &article{
-			ArticleHeader: &ArticleHeader{
-				ID:      items[i].ID,
-				Title:   items[i].Title,
-				Tags:    UnmarshalTag(items[i].Tags),
-				Author:  items[i].User.Name,
-				Private: items[i].Private,
-			},
-			Item: items[i],
-		}
+		articles[i] = b.convertItemsArticle(items[i])
 	}
 	return articles
 }
 
-func (b *Broker) PostArticle(post *PostItem) error {
-	body := &PostItem{
-		Body:    post.Body,
-		Private: post.Private,
-		Tags:    post.Tags,
-		Title:   post.Title,
+func (b *Broker) convertItemsArticle(item *Item) *article {
+	return &article{
+		ArticleHeader: &ArticleHeader{
+			ID:      item.ID,
+			Title:   item.Title,
+			Tags:    UnmarshalTag(item.Tags),
+			Author:  item.User.Name,
+			Private: item.Private,
+		},
+		Item: item,
 	}
+}
+
+func (b *Broker) PostArticle(body *PostItem) error {
 	req, err := b.NewRequest(http.MethodPost, "api/v2/items", body)
 	if err != nil {
 		return err
@@ -283,4 +308,44 @@ func (b *Broker) PostArticle(post *PostItem) error {
 		return err
 	}
 	return nil
+}
+
+func (b *Broker) UploadFresh(a *article) (bool, error) {
+	ra, err := b.fetchRemoteArticle(a)
+	if err != nil {
+		return false, err
+	}
+
+	if a.Item.UpdatedAt.After(ra.Item.UpdatedAt) == false {
+		logf("", "article is not uploaded, remote=%s > local=%s", ra.Item.UpdatedAt, a.Item.UpdatedAt)
+		return false, nil
+	}
+
+	body := &PostItem{
+		Body:    a.Item.Body,
+		Private: a.Private,
+		Tags:    MarshalTag(a.Tags),
+		Title:   a.Title,
+	}
+	for _, v := range MarshalTag(a.Tags) {
+		fmt.Printf("%#v\n", v)
+	}
+
+	u := fmt.Sprintf("api/v2/items/%s", a.ID)
+	req, err := b.NewRequest(http.MethodPatch, u, body)
+	if err != nil {
+		return false, err
+	}
+
+	resp, err := b.do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return false, errors.New(resp.Status)
+	}
+
+	return true, nil
 }

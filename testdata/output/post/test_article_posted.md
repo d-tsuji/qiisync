@@ -1,11 +1,11 @@
 ---
 ID: 9bdb298b4ad3d3c0162a
 Title: first_article_2
-Tags: '"Go"'
-Author: ""
+Tags: Go:1.14
+Author: "testtestadmin"
 Private: true
 ---
 
 # はじめに
 
-はじめての記事。その2
+はじめての記事。その3

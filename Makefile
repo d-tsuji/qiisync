@@ -36,5 +36,9 @@ post: build
 	$(BIN) post --path ./testdata/output/post/test_article.md --title first_article_2 --tag Go:1.14 --private true
 
 .PHONY: pull-only
-pull-only: build
+pull-only: clean build
 	$(BIN) pull
+
+.PHONY: upload
+upload: build
+	$(BIN) upload ./testdata/output/post/test_article_posted.md

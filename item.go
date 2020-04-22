@@ -1,7 +1,6 @@
 package main
 
 import (
-	"strconv"
 	"strings"
 	"time"
 )
@@ -57,7 +56,10 @@ func UnmarshalTag(Tags []*Tag) string {
 	// TODO: Convert to a string, including the version of the tag.
 	tags := make([]string, len(Tags))
 	for i := range Tags {
-		tags[i] = strconv.Quote(Tags[i].Name)
+		tags[i] = Tags[i].Name
+		for len(Tags[i].Versions) >= 1 {
+			tags[i] += ":" + strings.Join(Tags[i].Versions, ":")
+		}
 	}
 	return strings.Join(tags, ",")
 }

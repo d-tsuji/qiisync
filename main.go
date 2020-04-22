@@ -14,8 +14,8 @@ func main() {
 	app := cli.NewApp()
 	app.Commands = []*cli.Command{
 		commandPull,
-		//commandPush,
 		commandPost,
+		commandUpload,
 		//commandList,
 	}
 	app.Version = fmt.Sprintf("%s (%s)", version, revision)
@@ -29,7 +29,7 @@ func main() {
 
 var commandPull = &cli.Command{
 	Name:  "pull",
-	Usage: "Pull entries from remote",
+	Usage: "Pull articles from remote",
 	Action: func(c *cli.Context) error {
 		conf, err := loadConfiguration()
 		if err != nil {
@@ -55,7 +55,7 @@ var commandPull = &cli.Command{
 
 var commandPost = &cli.Command{
 	Name:  "post",
-	Usage: "Post a new entry to remote",
+	Usage: "Post a new article to remote",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "path"},
 		&cli.StringFlag{Name: "title"},
@@ -128,4 +128,35 @@ func loadConfiguration() (*config, error) {
 		return nil, err
 	}
 	return conf, nil
+}
+
+var commandUpload = &cli.Command{
+	Name:  "upload",
+	Usage: "push local article to remote",
+	Action: func(c *cli.Context) error {
+		first := c.Args().First()
+		if first == "" {
+			cli.ShowCommandHelp(c, "upload")
+			return errCommandHelp
+		}
+
+		conf, err := loadConfiguration()
+		if err != nil {
+			return err
+		}
+
+		for _, path := range c.Args().Slice() {
+			a, err := articleFromFile(path)
+			if err != nil {
+				return err
+			}
+
+			b := NewBroker(conf)
+			_, err = b.UploadFresh(a)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	},
 }
