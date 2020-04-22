@@ -2,4 +2,4 @@
 api_token = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 [local]
-base_dir = "./testdata/test"
+base_dir = "./testdata/broker"

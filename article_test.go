@@ -95,7 +95,7 @@ func Test_articleFromFile(t *testing.T) {
 ID: 1234567890abcdefghij
 Title: テストTitle
 Tags: Test:v0.0.1
-Author: "d-tsuji"
+Author: d-tsuji
 Private: true
 ---
 

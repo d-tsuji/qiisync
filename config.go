@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 )
@@ -29,5 +28,5 @@ func loadConfig(r io.Reader) (*config, error) {
 }
 
 func (c *config) BaseDir() string {
-	return filepath.Dir(c.Local.Dir)
+	return c.Local.Dir
 }

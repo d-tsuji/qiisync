@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-const (
+var (
 	defaultBaseURL      = "https://qiita.com/"
 	defaultItemsPerPage = 20
 	defaultExtension    = ".md"
