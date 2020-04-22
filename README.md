@@ -1,1 +1,1 @@
-# qsync
+# qiisync

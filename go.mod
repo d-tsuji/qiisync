@@ -1,4 +1,4 @@
-module github.com/d-tsuji/qsync
+module github.com/d-tsuji/qiisync
 
 go 1.14
 

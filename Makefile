@@ -1,6 +1,6 @@
 .PHONY: all build test lint clean
 
-BIN := qsync
+BIN := qiisync
 BUILD_LDFLAGS := "-s -w"
 GOBIN ?= $(shell go env GOPATH)/bin
 export GO111MODULE=on

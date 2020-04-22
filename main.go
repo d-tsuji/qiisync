@@ -116,7 +116,7 @@ func loadConfiguration() (*config, error) {
 	if err != nil {
 		return nil, err
 	}
-	fname := filepath.Join(home, ".config", "qsync", "config")
+	fname := filepath.Join(home, ".config", "qiisync", "config")
 	f, err := os.Open(fname)
 	if err != nil {
 		return nil, err
