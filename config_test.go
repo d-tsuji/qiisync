@@ -24,11 +24,11 @@ func Test_loadConfig(t *testing.T) {
 api_token = "1234567890abcdefghijklmnopqrstuvwxyz1234"
 
 [local]
-base_dir = "./testdata/output"`),
+base_dir = "./testdata/qiita"`),
 			},
 			want: &config{
 				Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
-				Local: localConfig{Dir: "./testdata/output"},
+				Local: localConfig{Dir: "./testdata/qiita"},
 			},
 			wantErr: false,
 		},
@@ -39,11 +39,11 @@ base_dir = "./testdata/output"`),
 api_token = "1234567890abcdefghijklmnopqrstuvwxyz1234"
 
 [local]
-base_dir = ".\\testdata\\output"`),
+base_dir = ".\\testdata\\qiita"`),
 			},
 			want: &config{
 				Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
-				Local: localConfig{Dir: `.\testdata\output`},
+				Local: localConfig{Dir: `.\testdata\qiita`},
 			},
 			wantErr: false,
 		},

@@ -28,14 +28,14 @@ clean:
 
 #### Local Test
 pull: clean build
-	rm -rf testdata/output/pull
+	rm -rf testdata/qiita/pull
 	$(BIN) pull
 
 post: build
-	$(BIN) post --path ./testdata/output/post/test_article.md --title first_article_2 --tag Go:1.14 --private true
+	$(BIN) post --path ./testdata/qiita/post/test_article.md --title first_article_2 --tag Go:1.14 --private true
 
 pull-only: clean build
 	$(BIN) pull
 
 upload: build
-	$(BIN) upload ./testdata/output/post/test_article_posted.md
+	$(BIN) upload ./testdata/qiita/post/test_article_posted.md
