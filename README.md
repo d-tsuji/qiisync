@@ -1,6 +1,6 @@
 # Qiisync
 
-[![Actions Status](https://github.com/d-tsuji/qiisync/workflows/test/badge.svg)](https://github.com/d-tsuji/qiisync/actions)
+[![GitHub release](https://img.shields.io/github/v/release/d-tsuji/qiisync.svg)](https://github.com/d-tsuji/qiisync/releases/latest) [![Go Report Card](https://goreportcard.com/badge/github.com/d-tsuji/qiisync)](https://goreportcard.com/report/github.com/d-tsuji/qiisync) [![Actions Status](https://github.com/d-tsuji/qiisync/workflows/test/badge.svg)](https://github.com/d-tsuji/qiisync/actions)
 
 <img src="img/logo.png" width="300">
 
