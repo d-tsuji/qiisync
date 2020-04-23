@@ -13,6 +13,7 @@ import (
 
 var delimReg = regexp.MustCompile(`---\n+`)
 
+// ArticleHeader is a structure that represents the metadata of a Article.
 type ArticleHeader struct {
 	ID      string `yaml:"ID"`
 	Title   string `yaml:"Title"`
@@ -21,13 +22,14 @@ type ArticleHeader struct {
 	Private bool   `yaml:"Private"`
 }
 
-type article struct {
+// Article is a structure that holds the metadata of a file and the contents of an article.
+type Article struct {
 	*ArticleHeader
 	Item     *Item
 	FilePath string
 }
 
-func (a *article) HeaderString() (string, error) {
+func (a *Article) headerString() (string, error) {
 	d, err := yaml.Marshal(a.ArticleHeader)
 	if err != nil {
 		log.Fatalf("error: %v", err)
@@ -39,8 +41,8 @@ func (a *article) HeaderString() (string, error) {
 	return strings.Join(headers, "\n") + "---\n\n", nil
 }
 
-func (a *article) FullContent() (string, error) {
-	header, err := a.HeaderString()
+func (a *Article) fullContent() (string, error) {
+	header, err := a.headerString()
 	if err != nil {
 		return "", nil
 	}
@@ -52,7 +54,7 @@ func (a *article) FullContent() (string, error) {
 	return c, nil
 }
 
-func articleFromFile(filepath string) (*article, error) {
+func articleFromFile(filepath string) (*Article, error) {
 	b, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		return nil, err
@@ -63,7 +65,7 @@ func articleFromFile(filepath string) (*article, error) {
 	if !isNew {
 		c := delimReg.Split(content, 3)
 		if len(c) != 3 || c[0] != "" {
-			return nil, fmt.Errorf("article format is invalid")
+			return nil, fmt.Errorf("Article format is invalid")
 		}
 
 		if err := yaml.Unmarshal([]byte(c[1]), &ah); err != nil {
@@ -71,7 +73,7 @@ func articleFromFile(filepath string) (*article, error) {
 		}
 		content = c[2]
 	}
-	a := &article{
+	a := &Article{
 		ArticleHeader: &ah,
 		Item:          &Item{Body: content},
 		FilePath:      filepath,

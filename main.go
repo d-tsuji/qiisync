@@ -37,7 +37,7 @@ var commandPull = &cli.Command{
 		if err != nil {
 			return fmt.Errorf("load config: %w", err)
 		}
-		b := NewBroker(conf)
+		b := newBroker(conf)
 		remoteArticles, err := b.fetchRemoteArticles()
 		if err != nil {
 			return err
@@ -47,7 +47,7 @@ var commandPull = &cli.Command{
 			return err
 		}
 		for i := range remoteArticles {
-			if _, err := b.StoreFresh(localArticles, remoteArticles[i]); err != nil {
+			if _, err := b.storeFresh(localArticles, remoteArticles[i]); err != nil {
 				return err
 			}
 		}
@@ -57,7 +57,7 @@ var commandPull = &cli.Command{
 
 var commandPost = &cli.Command{
 	Name:  "post",
-	Usage: "Post a new article to remote",
+	Usage: "Post a new Article to remote",
 	Action: func(c *cli.Context) error {
 		filename := c.Args().First()
 		if filename == "" {
@@ -74,7 +74,7 @@ var commandPost = &cli.Command{
 		sc := bufio.NewScanner(os.Stdin)
 
 		fmt.Fprintln(os.Stdout, "")
-		fmt.Fprintln(os.Stdout, `Please enter the "title" of the article you want to post.`)
+		fmt.Fprintln(os.Stdout, `Please enter the "title" of the Article you want to post.`)
 		_ = sc.Scan()
 		title := sc.Text()
 		if title == "" {
@@ -82,7 +82,7 @@ var commandPost = &cli.Command{
 		}
 
 		fmt.Fprintln(os.Stdout, "")
-		fmt.Fprintln(os.Stdout, `Please enter the "tag" of the article you want to post.`)
+		fmt.Fprintln(os.Stdout, `Please enter the "tag" of the Article you want to post.`)
 		fmt.Fprintln(os.Stdout, `Tag is like "React,redux,TypeScript" or "Go" or "Python:3.7". To specify more than one, separate them with ",".`)
 		_ = sc.Scan()
 		tag := sc.Text()
@@ -91,7 +91,7 @@ var commandPost = &cli.Command{
 		}
 
 		fmt.Fprintln(os.Stdout, "")
-		fmt.Fprintln(os.Stdout, `Do you make the article you post private? "true" is private, "false" is public.`)
+		fmt.Fprintln(os.Stdout, `Do you make the Article you post private? "true" is private, "false" is public.`)
 		_ = sc.Scan()
 		text := sc.Text()
 		private, err := strconv.ParseBool(text)
@@ -107,12 +107,12 @@ var commandPost = &cli.Command{
 		post := &PostItem{
 			Body:    a.Item.Body,
 			Private: private,
-			Tags:    MarshalTag(tag),
+			Tags:    marshalTag(tag),
 			Title:   title,
 		}
 
-		b := NewBroker(conf)
-		err = b.PostArticle(post)
+		b := newBroker(conf)
+		err = b.postArticle(post)
 		if err != nil {
 			return err
 		}
@@ -140,7 +140,7 @@ func loadConfiguration() (*config, error) {
 
 var commandUpdate = &cli.Command{
 	Name:  "update",
-	Usage: "push local article to remote",
+	Usage: "push local Article to remote",
 	Action: func(c *cli.Context) error {
 		filename := c.Args().First()
 		if filename == "" {
@@ -159,12 +159,12 @@ var commandUpdate = &cli.Command{
 		}
 
 		if !a.Private {
-			return errors.New("Once published, an article cannot be made a private publication.\n" +
-				"\tPlease check if the Private item in the header of the article is set to false.")
+			return errors.New("Once published, an Article cannot be made a private publication.\n" +
+				"\tPlease check if the Private item in the header of the Article is set to false.")
 		}
 
-		b := NewBroker(conf)
-		_, err = b.UploadFresh(a)
+		b := newBroker(conf)
+		_, err = b.uploadFresh(a)
 		if err != nil {
 			return err
 		}

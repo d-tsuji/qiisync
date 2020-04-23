@@ -28,8 +28,8 @@ func TestMarshalTag(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := MarshalTag(tt.args.tagString); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MarshalTag() = %v, want %v", got, tt.want)
+			if got := marshalTag(tt.args.tagString); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("marshalTag() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -57,8 +57,8 @@ func TestUnmarshalTag(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := UnmarshalTag(tt.args.Tags); got != tt.want {
-				t.Errorf("UnmarshalTag() = %v, want %v", got, tt.want)
+			if got := unmarshalTag(tt.args.Tags); got != tt.want {
+				t.Errorf("unmarshalTag() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -67,7 +67,7 @@ func TestUnmarshalTag(t *testing.T) {
 func TestDateFormat(t *testing.T) {
 	got := time.Date(2020, 4, 22, 20, 43, 00, 0, time.UTC)
 	want := "20200422"
-	if DateFormat(got) != want {
-		t.Errorf("DateFormat() = %v, want %v", got, want)
+	if dateFormat(got) != want {
+		t.Errorf("dateFormat() = %v, want %v", got, want)
 	}
 }

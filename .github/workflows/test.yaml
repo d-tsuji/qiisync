@@ -1,4 +1,4 @@
-name: CI
+name: test
 on: [push, pull_request]
 jobs:
   test:
@@ -20,5 +20,5 @@ jobs:
         run: echo "::add-path::$(go env GOPATH)/bin"
       - name: Test
         run: make test
-#      - name: Lint
-#        run: make lint
+      - name: Lint
+        run: make lint

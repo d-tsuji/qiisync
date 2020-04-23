@@ -17,17 +17,21 @@ import (
 )
 
 var (
+	// Define it with var so that it can be replaced with
+	// the URL of the mock server of httptest when testing.
 	defaultBaseURL      = "https://qiita.com/"
 	defaultItemsPerPage = 20
 	defaultExtension    = ".md"
 )
 
+// Broker is the core structure of qiisync that handles
+// Qiita and the local filesystem with each other.
 type Broker struct {
 	*config
 	BaseURL *url.URL
 }
 
-func NewBroker(c *config) *Broker {
+func newBroker(c *config) *Broker {
 	baseURL, _ := url.Parse(defaultBaseURL)
 	return &Broker{
 		config:  c,
@@ -39,9 +43,9 @@ func (b *Broker) do(req *http.Request) (*http.Response, error) {
 	return http.DefaultClient.Do(req)
 }
 
-func (b *Broker) fetchRemoteArticle(a *article) (*article, error) {
+func (b *Broker) fetchRemoteArticle(a *Article) (*Article, error) {
 	if a.ID == "" {
-		return nil, errors.New("article ID is required")
+		return nil, errors.New("Article ID is required")
 	}
 	u := fmt.Sprintf("api/v2/items/%s", a.ID)
 	req, err := b.NewRequest(http.MethodGet, u, nil)
@@ -66,8 +70,8 @@ func (b *Broker) fetchRemoteArticle(a *article) (*article, error) {
 	return b.convertItemsArticle(&item), nil
 }
 
-func (b *Broker) fetchRemoteArticles() ([]*article, error) {
-	var articles []*article
+func (b *Broker) fetchRemoteArticles() ([]*Article, error) {
+	var articles []*Article
 	for i := 1; ; i++ {
 		aarticles, hasNext, err := b.fetchRemoteItemsPerPage(i)
 		if err != nil {
@@ -82,7 +86,7 @@ func (b *Broker) fetchRemoteArticles() ([]*article, error) {
 	return articles, nil
 }
 
-func (b *Broker) fetchRemoteItemsPerPage(page int) ([]*article, bool, error) {
+func (b *Broker) fetchRemoteItemsPerPage(page int) ([]*Article, bool, error) {
 	u := fmt.Sprintf("api/v2/authenticated_user/items?page=%d&per_page=%d", page, defaultItemsPerPage)
 	req, err := b.NewRequest(http.MethodGet, u, nil)
 	if err != nil {
@@ -112,14 +116,14 @@ func (b *Broker) fetchRemoteItemsPerPage(page int) ([]*article, bool, error) {
 	return b.convertItemsArticles(items), defaultItemsPerPage*page < total, nil
 }
 
-func (b *Broker) fetchLocalArticles() (articles map[string]*article, err error) {
-	articles = make(map[string]*article)
+func (b *Broker) fetchLocalArticles() (articles map[string]*Article, err error) {
+	articles = make(map[string]*Article)
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("recoverd when dirwalk(%s): %v", b.BaseDir(), r)
+			err = fmt.Errorf("recoverd when dirwalk(%s): %v", b.baseDir(), r)
 		}
 	}()
-	fnameList := dirwalk(b.BaseDir())
+	fnameList := dirwalk(b.baseDir())
 	for i := range fnameList {
 		a, err := articleFromFile(fnameList[i])
 		if err != nil {
@@ -156,6 +160,7 @@ func dirwalk(dir string) []string {
 	return paths
 }
 
+// NewRequest is a testable NewRequest that wraps http.NewRequest.
 func (b *Broker) NewRequest(method, urlStr string, body interface{}) (*http.Request, error) {
 	if !strings.HasSuffix(b.BaseURL.Path, "/") {
 		return nil, fmt.Errorf("BaseURL must have a trailing slash, but %q does not", b.BaseURL)
@@ -188,16 +193,18 @@ func (b *Broker) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 	return req, nil
 }
 
-func (b *Broker) LocalPath(article *article) string {
+func (b *Broker) localPath(article *Article) string {
 	extension := ".md"
-	paths := []string{b.BaseDir()}
-	paths = append(paths, DateFormat(article.Item.CreatedAt), article.ID+extension)
+	paths := []string{b.baseDir()}
+	paths = append(paths, dateFormat(article.Item.CreatedAt), article.ID+extension)
 	return filepath.Join(paths...)
 }
 
-func (b *Broker) StoreFresh(localArticles map[string]*article, remoteArticle *article) (bool, error) {
+// storeFresh compares the files in the local filesystem with the articles retrieved from Qiita and
+// updates the files in the local filesystem.
+func (b *Broker) storeFresh(localArticles map[string]*Article, remoteArticle *Article) (bool, error) {
 	var localLastModified time.Time
-	path := filepath.Join(b.BaseDir(), DateFormat(remoteArticle.Item.CreatedAt), b.StoreFilename(remoteArticle))
+	path := filepath.Join(b.baseDir(), dateFormat(remoteArticle.Item.CreatedAt), b.storeFileName(remoteArticle))
 
 	a, exists := localArticles[remoteArticle.ID]
 	if exists {
@@ -206,7 +213,7 @@ func (b *Broker) StoreFresh(localArticles map[string]*article, remoteArticle *ar
 	}
 	if remoteArticle.Item.UpdatedAt.After(localLastModified) {
 		logf("fresh", "remote=%s > local=%s", remoteArticle.Item.UpdatedAt, localLastModified)
-		if err := b.Store(path, remoteArticle); err != nil {
+		if err := b.store(path, remoteArticle); err != nil {
 			return false, err
 		}
 		return true, nil
@@ -215,7 +222,7 @@ func (b *Broker) StoreFresh(localArticles map[string]*article, remoteArticle *ar
 	return false, nil
 }
 
-func (b *Broker) Store(path string, article *article) error {
+func (b *Broker) store(path string, article *Article) error {
 	logf("store", "%s", path)
 
 	dir, _ := filepath.Split(path)
@@ -229,7 +236,7 @@ func (b *Broker) Store(path string, article *article) error {
 		return err
 	}
 
-	fullContext, err := article.FullContent()
+	fullContext, err := article.fullContent()
 	if err != nil {
 		return err
 	}
@@ -245,20 +252,20 @@ func (b *Broker) Store(path string, article *article) error {
 	return os.Chtimes(path, article.Item.UpdatedAt, article.Item.UpdatedAt)
 }
 
-func (b *Broker) convertItemsArticles(items []*Item) []*article {
-	articles := make([]*article, len(items))
+func (b *Broker) convertItemsArticles(items []*Item) []*Article {
+	articles := make([]*Article, len(items))
 	for i := range items {
 		articles[i] = b.convertItemsArticle(items[i])
 	}
 	return articles
 }
 
-func (b *Broker) convertItemsArticle(item *Item) *article {
-	return &article{
+func (b *Broker) convertItemsArticle(item *Item) *Article {
+	return &Article{
 		ArticleHeader: &ArticleHeader{
 			ID:      item.ID,
 			Title:   item.Title,
-			Tags:    UnmarshalTag(item.Tags),
+			Tags:    unmarshalTag(item.Tags),
 			Author:  item.User.Name,
 			Private: item.Private,
 		},
@@ -266,7 +273,7 @@ func (b *Broker) convertItemsArticle(item *Item) *article {
 	}
 }
 
-func (b *Broker) PostArticle(body *PostItem) error {
+func (b *Broker) postArticle(body *PostItem) error {
 	req, err := b.NewRequest(http.MethodPost, "api/v2/items", body)
 	if err != nil {
 		return err
@@ -286,13 +293,13 @@ func (b *Broker) PostArticle(body *PostItem) error {
 	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
 		return fmt.Errorf("json decode: %w", err)
 	}
-	logf("post", "article ---> %s", r.URL)
+	logf("post", "Article ---> %s", r.URL)
 
-	article := &article{
+	article := &Article{
 		ArticleHeader: &ArticleHeader{
 			ID:      r.ID,
 			Title:   r.Title,
-			Tags:    UnmarshalTag(r.Tags),
+			Tags:    unmarshalTag(r.Tags),
 			Author:  r.User.Name,
 			Private: r.Private,
 		},
@@ -303,14 +310,14 @@ func (b *Broker) PostArticle(body *PostItem) error {
 		},
 	}
 
-	path := filepath.Join(b.BaseDir(), r.CreatedAt.Format("20060102"), b.StoreFilename(article))
-	if err := b.Store(path, article); err != nil {
+	path := filepath.Join(b.baseDir(), r.CreatedAt.Format("20060102"), b.storeFileName(article))
+	if err := b.store(path, article); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (b *Broker) PatchArticle(body *PostItem) error {
+func (b *Broker) patchArticle(body *PostItem) error {
 	if body.ID == "" {
 		return errors.New("ID is required")
 	}
@@ -329,38 +336,38 @@ func (b *Broker) PatchArticle(body *PostItem) error {
 	if resp.StatusCode != http.StatusOK {
 		return errors.New(resp.Status)
 	}
-	logf("post", "fresh article ---> %s", body.URL)
+	logf("post", "fresh Article ---> %s", body.URL)
 	return nil
 }
 
-func (b *Broker) UploadFresh(a *article) (bool, error) {
+func (b *Broker) uploadFresh(a *Article) (bool, error) {
 	ra, err := b.fetchRemoteArticle(a)
 	if err != nil {
 		return false, err
 	}
 
 	if a.Item.UpdatedAt.After(ra.Item.UpdatedAt) == false {
-		logf("", "article is not updated. remote=%s > local=%s", ra.Item.UpdatedAt, a.Item.UpdatedAt)
+		logf("", "Article is not updated. remote=%s > local=%s", ra.Item.UpdatedAt, a.Item.UpdatedAt)
 		return false, nil
 	}
 
 	body := &PostItem{
 		Body:    a.Item.Body,
 		Private: a.Private,
-		Tags:    MarshalTag(a.Tags),
+		Tags:    marshalTag(a.Tags),
 		Title:   a.Title,
 		ID:      a.ID,
 		URL:     ra.Item.URL,
 	}
 
-	if err := b.PatchArticle(body); err != nil {
+	if err := b.patchArticle(body); err != nil {
 		return false, err
 	}
 
 	return true, nil
 }
 
-func (b *Broker) StoreFilename(a *article) string {
+func (b *Broker) storeFileName(a *Article) string {
 	var filename string
 	switch b.Local.FileNameMode {
 	case "":

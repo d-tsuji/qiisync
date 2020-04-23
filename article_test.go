@@ -11,7 +11,7 @@ import (
 )
 
 func TestHeaderString(t *testing.T) {
-	a := &article{
+	a := &Article{
 		ArticleHeader: &ArticleHeader{
 			ID:      "1234567890abcdefghij",
 			Title:   "はじめてのGo",
@@ -21,9 +21,9 @@ func TestHeaderString(t *testing.T) {
 		},
 	}
 
-	got, err := a.HeaderString()
+	got, err := a.headerString()
 	if err != nil {
-		t.Errorf("HeaderString(): %v", err)
+		t.Errorf("headerString(): %v", err)
 		return
 	}
 	want := `---
@@ -41,7 +41,7 @@ Private: false
 }
 
 func TestFullContent(t *testing.T) {
-	a := &article{
+	a := &Article{
 		ArticleHeader: &ArticleHeader{
 			ID:      "1234567890abcdefghij",
 			Title:   "はじめてのGo",
@@ -54,9 +54,9 @@ func TestFullContent(t *testing.T) {
 		},
 	}
 
-	got, err := a.FullContent()
+	got, err := a.fullContent()
 	if err != nil {
-		t.Errorf("FullContent(): %v", err)
+		t.Errorf("fullContent(): %v", err)
 		return
 	}
 	want := `---
@@ -86,7 +86,7 @@ func Test_articleFromFile(t *testing.T) {
 		name      string
 		inputData string
 		args      args
-		want      *article
+		want      *Article
 		wantErr   bool
 	}{
 		{
@@ -104,7 +104,7 @@ Private: true
 はじめてのQiitaです
 `,
 			args: args{filepath.Join("temp", "test.md")},
-			want: &article{
+			want: &Article{
 				ArticleHeader: &ArticleHeader{
 					ID:      "1234567890abcdefghij",
 					Title:   "テストTitle",

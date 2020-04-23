@@ -28,6 +28,6 @@ func loadConfig(r io.Reader) (*config, error) {
 	return &config, nil
 }
 
-func (c *config) BaseDir() string {
+func (c *config) baseDir() string {
 	return c.Local.Dir
 }
