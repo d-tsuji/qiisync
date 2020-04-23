@@ -1,0 +1,61 @@
+project_name: qiisync
+before:
+  hooks:
+    - go mod tidy
+builds:
+  -
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - 386
+    main: .
+    binary: qiisync
+    ldflags:
+      - -s -w
+      - "-X main.version={{.Version}}"
+
+archives:
+  - format: zip
+    name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    files:
+      - LICENSE
+      - README.md
+
+nfpms:
+  -
+    formats:
+      - deb
+      - rpm
+    dependencies:
+      - rpm
+    vendor: "d-tsuji"
+    homepage: "https://github.com/d-tsuji/qiisync"
+    maintainer: "Tsuji Daishiro"
+    description: "Qiita CLI tool, support push and pull from/to local filesystem and Qiita."
+    license: "MIT"
+    file_name_template: "{{.ProjectName}}_{{.Version}}_{{.Os}}-{{.Arch}}"
+    replacements:
+      amd64: 64-bit
+      386: 32-bit
+      darwin: macOS
+      linux: Tux
+
+brews:
+  - description: "Qiita CLI tool, support push and pull from/to local filesystem and Qiita."
+    github:
+      owner: d-tsuji
+      name: homebrew-qiisync
+    commit_author:
+      name: goreleaserbot
+      email: goreleaser@carlosbecker.com
+    homepage: "https://github.com/d-tsuji/qiisync"
+    install: |
+      bin.install "qiisync"
+    test: |
+      system "#{bin}/qiisync"
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
