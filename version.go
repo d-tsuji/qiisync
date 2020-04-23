@@ -1,5 +1,4 @@
-package main
+package qiisync
 
-const version = "0.0.1"
-
-var revision = "HEAD"
+// Version is the version to be displayed in the command line help message.
+const Version = "0.0.1"

@@ -1,4 +1,4 @@
-package main
+package qiisync
 
 import (
 	"fmt"
@@ -16,6 +16,7 @@ var logger = &colorine.Logger{
 	},
 }
 
-func logf(prefix, pattern string, args ...interface{}) {
+// Logf is a logger that displays logs colorfully.
+func Logf(prefix, pattern string, args ...interface{}) {
 	logger.Log(prefix, fmt.Sprintf(pattern, args...))
 }

@@ -1,12 +1,15 @@
-package main
+package qiisync
 
 import (
 	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 )
 
-type config struct {
+// Config stores Qiita's configuration and local environment settings.
+type Config struct {
 	Qiita qiitaConfig `toml:"qiita"`
 	Local localConfig `toml:"local"`
 }
@@ -20,14 +23,29 @@ type localConfig struct {
 	FileNameMode string `toml:"filename_mode"`
 }
 
-func loadConfig(r io.Reader) (*config, error) {
-	var config config
+// LoadConfiguration gets its configuration from "~/.config/qiisync/config".
+func LoadConfiguration() (*Config, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+	filename := filepath.Join(home, ".config", "qiisync", "config")
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return loadConfig(f)
+}
+
+func loadConfig(r io.Reader) (*Config, error) {
+	var config Config
 	if _, err := toml.DecodeReader(r, &config); err != nil {
 		return nil, err
 	}
 	return &config, nil
 }
 
-func (c *config) baseDir() string {
+func (c *Config) baseDir() string {
 	return c.Local.Dir
 }

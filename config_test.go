@@ -1,4 +1,4 @@
-package main
+package qiisync
 
 import (
 	"io"
@@ -14,7 +14,7 @@ func Test_loadConfig(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *config
+		want    *Config
 		wantErr bool
 	}{
 		{
@@ -27,7 +27,7 @@ api_token = "1234567890abcdefghijklmnopqrstuvwxyz1234"
 base_dir = "./testdata/qiita"
 filename_mode = "title"`),
 			},
-			want: &config{
+			want: &Config{
 				Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
 				Local: localConfig{Dir: "./testdata/qiita", FileNameMode: "title"},
 			},
@@ -43,7 +43,7 @@ api_token = "1234567890abcdefghijklmnopqrstuvwxyz1234"
 base_dir = "./testdata/qiita"
 filename_mode = "id"`),
 			},
-			want: &config{
+			want: &Config{
 				Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
 				Local: localConfig{Dir: "./testdata/qiita", FileNameMode: "id"},
 			},
@@ -59,7 +59,7 @@ api_token = "1234567890abcdefghijklmnopqrstuvwxyz1234"
 base_dir = ".\\testdata\\qiita"
 filename_mode = "title"`),
 			},
-			want: &config{
+			want: &Config{
 				Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
 				Local: localConfig{Dir: `.\testdata\qiita`, FileNameMode: "title"},
 			},

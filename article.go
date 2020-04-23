@@ -1,4 +1,4 @@
-package main
+package qiisync
 
 import (
 	"fmt"
@@ -54,7 +54,8 @@ func (a *Article) fullContent() (string, error) {
 	return c, nil
 }
 
-func articleFromFile(filepath string) (*Article, error) {
+// ArticleFromFile extracts an article from local filesysytem.
+func ArticleFromFile(filepath string) (*Article, error) {
 	b, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		return nil, err
@@ -65,7 +66,7 @@ func articleFromFile(filepath string) (*Article, error) {
 	if !isNew {
 		c := delimReg.Split(content, 3)
 		if len(c) != 3 || c[0] != "" {
-			return nil, fmt.Errorf("Article format is invalid")
+			return nil, fmt.Errorf("article format is invalid")
 		}
 
 		if err := yaml.Unmarshal([]byte(c[1]), &ah); err != nil {

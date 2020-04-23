@@ -1,4 +1,4 @@
-.PHONY: all build test lint clean
+.PHONY: all build test lint clean deps devel-deps
 
 BIN := qiisync
 BUILD_LDFLAGS := "-s -w"
@@ -7,18 +7,24 @@ export GO111MODULE=on
 
 all: clean build
 
-build:
-	go build -ldflags=$(BUILD_LDFLAGS) -o $(BIN)
+deps:
+	go mod tidy
 
-test:
+devel-deps: deps
+	GO111MODULE=off go get -u \
+	  golang.org/x/lint/golint
+
+build:
+	go build -ldflags=$(BUILD_LDFLAGS) -o $(BIN) ./cmd/qiisync
+
+test: deps
 	go test -v -count=1 ./...
 
-test-cover:
+test-cover: deps
 	go test -v -cover -coverprofile=c.out
 	go tool cover -html=c.out -o coverage.html
 
-lint:
-	go get golang.org/x/lint/golint
+lint: devel-deps
 	go vet ./...
 	$(GOBIN)/golint -set_exit_status ./...
 
@@ -29,8 +35,9 @@ clean:
 ################################
 #### For E2E Testing
 ################################
+.PHONY: pull pull-only post update
 pull: clean build
-	rm -rf testdata/qiita/pull
+	rm -rf testdata/output/pull
 	./$(BIN) pull
 
 pull-only: clean build
@@ -40,4 +47,4 @@ post: clean build
 	 ./$(BIN) post ./testdata/qiita/post/test_article.md
 
 update: clean build
-	./$(BIN) update ./testdata/output/pull/20200423/a.md
+	./$(BIN) update ./testdata/output/pull/20200424/hoge.md

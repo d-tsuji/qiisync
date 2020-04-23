@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 
+	"github.com/d-tsuji/qiisync"
 	"github.com/urfave/cli/v2"
 )
 
@@ -20,11 +20,11 @@ func main() {
 		commandPost,
 		commandUpdate,
 	}
-	app.Version = fmt.Sprintf("%s (%s)", version, revision)
+	app.Version = fmt.Sprintf("%s", qiisync.Version)
 	err := app.Run(os.Args)
 	if err != nil {
 		if err != errCommandHelp {
-			logf("error", "%v", err)
+			qiisync.Logf("error", "%v", err)
 		}
 	}
 }
@@ -33,21 +33,21 @@ var commandPull = &cli.Command{
 	Name:  "pull",
 	Usage: "Pull articles from remote",
 	Action: func(c *cli.Context) error {
-		conf, err := loadConfiguration()
+		conf, err := qiisync.LoadConfiguration()
 		if err != nil {
 			return fmt.Errorf("load config: %w", err)
 		}
-		b := newBroker(conf)
-		remoteArticles, err := b.fetchRemoteArticles()
+		b := qiisync.NewBroker(conf)
+		remoteArticles, err := b.FetchRemoteArticles()
 		if err != nil {
 			return err
 		}
-		localArticles, err := b.fetchLocalArticles()
+		localArticles, err := b.FetchLocalArticles()
 		if err != nil {
 			return err
 		}
 		for i := range remoteArticles {
-			if _, err := b.storeFresh(localArticles, remoteArticles[i]); err != nil {
+			if _, err := b.StoreFresh(localArticles, remoteArticles[i]); err != nil {
 				return err
 			}
 		}
@@ -65,7 +65,7 @@ var commandPost = &cli.Command{
 			return errCommandHelp
 		}
 
-		conf, err := loadConfiguration()
+		conf, err := qiisync.LoadConfiguration()
 		if err != nil {
 			return err
 		}
@@ -99,43 +99,25 @@ var commandPost = &cli.Command{
 			return fmt.Errorf("input string (%s) could not be parsed into bool", text)
 		}
 
-		a, err := articleFromFile(filename)
+		a, err := qiisync.ArticleFromFile(filename)
 		if err != nil {
 			return err
 		}
 
-		post := &PostItem{
+		post := &qiisync.PostItem{
 			Body:    a.Item.Body,
 			Private: private,
-			Tags:    marshalTag(tag),
+			Tags:    qiisync.MarshalTag(tag),
 			Title:   title,
 		}
 
-		b := newBroker(conf)
-		err = b.postArticle(post)
+		b := qiisync.NewBroker(conf)
+		err = b.PostArticle(post)
 		if err != nil {
 			return err
 		}
 		return nil
 	},
-}
-
-func loadConfiguration() (*config, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
-	}
-	filename := filepath.Join(home, ".config", "qiisync", "config")
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	conf, err := loadConfig(f)
-	if err != nil {
-		return nil, err
-	}
-	return conf, nil
 }
 
 var commandUpdate = &cli.Command{
@@ -148,12 +130,12 @@ var commandUpdate = &cli.Command{
 			return errCommandHelp
 		}
 
-		conf, err := loadConfiguration()
+		conf, err := qiisync.LoadConfiguration()
 		if err != nil {
 			return err
 		}
 
-		a, err := articleFromFile(filename)
+		a, err := qiisync.ArticleFromFile(filename)
 		if err != nil {
 			return err
 		}
@@ -163,8 +145,8 @@ var commandUpdate = &cli.Command{
 				"\tPlease check if the Private item in the header of the Article is set to false.")
 		}
 
-		b := newBroker(conf)
-		_, err = b.uploadFresh(a)
+		b := qiisync.NewBroker(conf)
+		_, err = b.UploadFresh(a)
 		if err != nil {
 			return err
 		}

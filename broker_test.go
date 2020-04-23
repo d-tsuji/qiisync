@@ -1,4 +1,4 @@
-package main
+package qiisync
 
 import (
 	"fmt"
@@ -190,9 +190,9 @@ func Test_fetchRemoteArticles(t *testing.T) {
 	})
 
 	defaultItemsPerPage = 1
-	got, err := broker.fetchRemoteArticles()
+	got, err := broker.FetchRemoteArticles()
 	if err != nil {
-		t.Errorf("fetchRemoteArticles(): %v", err)
+		t.Errorf("FetchRemoteArticles(): %v", err)
 		return
 	}
 	want := []*Article{
@@ -257,7 +257,7 @@ func Test_fetchRemoteArticles(t *testing.T) {
 	}
 
 	if diff := cmp.Diff(want, got); diff != "" {
-		t.Errorf("fetchRemoteArticles() mismatch (-want +got):\n%s", diff)
+		t.Errorf("FetchRemoteArticles() mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -380,13 +380,13 @@ func TestLocalPath(t *testing.T) {
 	}
 
 	b := &Broker{
-		config: &config{
+		Config: &Config{
 			Local: localConfig{Dir: filepath.Join("testdata", "article")},
 		},
 	}
 
 	got := b.localPath(a)
-	want := filepath.Join("testdata", "article", "20200422", "1234567890abcdefghij.md")
+	want := filepath.Join("testdata", "article", "20200422", "はじめてのGo.md")
 
 	if got != want {
 		t.Errorf("localPath() = %v, want %v", got, want)
@@ -395,7 +395,7 @@ func TestLocalPath(t *testing.T) {
 
 func TestStoreFresh(t *testing.T) {
 	type fields struct {
-		config  *config
+		config  *Config
 		BaseURL *url.URL
 	}
 	type args struct {
@@ -412,7 +412,7 @@ func TestStoreFresh(t *testing.T) {
 		{
 			name: "fresh",
 			fields: fields{
-				config: &config{
+				config: &Config{
 					Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
 					Local: localConfig{
 						Dir: "./testdata/broker",
@@ -456,7 +456,7 @@ func TestStoreFresh(t *testing.T) {
 		{
 			name: "not_fresh",
 			fields: fields{
-				config: &config{
+				config: &Config{
 					Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
 					Local: localConfig{
 						Dir: "./testdata/broker",
@@ -501,15 +501,15 @@ func TestStoreFresh(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			baseURL, _ := url.Parse(tt.fields.config.Local.Dir)
-			b := &Broker{config: tt.fields.config, BaseURL: baseURL}
+			b := &Broker{Config: tt.fields.config, BaseURL: baseURL}
 
-			got, err := b.storeFresh(tt.args.localArticles, tt.args.remoteArticle)
+			got, err := b.StoreFresh(tt.args.localArticles, tt.args.remoteArticle)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("storeFresh() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("StoreFresh() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("storeFresh() got = %v, want %v", got, tt.want)
+				t.Errorf("StoreFresh() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -541,7 +541,7 @@ func TestStore(t *testing.T) {
 	}
 
 	b := &Broker{
-		config: &config{
+		Config: &Config{
 			Local: localConfig{Dir: filepath.Join(tempDir)},
 		},
 	}
@@ -639,7 +639,7 @@ func TestPostArticle(t *testing.T) {
 `)
 	})
 
-	err := b.postArticle(&PostItem{
+	err := b.PostArticle(&PostItem{
 		Body:    "# Example",
 		Private: false,
 		Tags: []*Tag{
@@ -651,7 +651,7 @@ func TestPostArticle(t *testing.T) {
 		Title: "Example title",
 	})
 	if err != nil {
-		t.Errorf("postArticle(): %v", err)
+		t.Errorf("PostArticle(): %v", err)
 		return
 	}
 }
@@ -739,11 +739,11 @@ func TestPatchArticle(t *testing.T) {
 	}
 }
 
-func TestBroker_fetchLocalArticles(t *testing.T) {
+func Test_fetchLocalArticles(t *testing.T) {
 	updateAt := time.Date(2020, 4, 22, 16, 59, 59, 0, time.UTC)
 
 	type fields struct {
-		config  *config
+		config  *Config
 		BaseURL *url.URL
 	}
 	tests := []struct {
@@ -754,7 +754,7 @@ func TestBroker_fetchLocalArticles(t *testing.T) {
 	}{
 		{
 			name: "normal",
-			fields: fields{config: &config{
+			fields: fields{config: &Config{
 				Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
 				Local: localConfig{Dir: filepath.Join("testdata", "article")}}},
 			wantArticles: map[string]*Article{
@@ -775,24 +775,37 @@ func TestBroker_fetchLocalArticles(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "id_duplicated",
+			fields: fields{config: &Config{
+				Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
+				Local: localConfig{Dir: filepath.Join("testdata", "duplicate")}}},
+			wantErr: true,
+		},
 	}
 
 	if err := os.Chtimes(filepath.Join("testdata", "article", "20_test_article_posted.md"), updateAt, updateAt); err != nil {
 		t.Error(err)
 	}
+	if err := os.Chtimes(filepath.Join("testdata", "duplicate", "20_test_article_posted.md"), updateAt, updateAt); err != nil {
+		t.Error(err)
+	}
+	if err := os.Chtimes(filepath.Join("testdata", "duplicate", "21_test_article_posted_copy.md"), updateAt, updateAt); err != nil {
+		t.Error(err)
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			baseURL, _ := url.Parse(tt.fields.config.Local.Dir)
-			b := &Broker{config: tt.fields.config, BaseURL: baseURL}
+			b := &Broker{Config: tt.fields.config, BaseURL: baseURL}
 
-			gotArticles, err := b.fetchLocalArticles()
+			gotArticles, err := b.FetchLocalArticles()
 			if (err != nil) != tt.wantErr {
-				t.Errorf("fetchLocalArticles() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("FetchLocalArticles() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if diff := cmp.Diff(tt.wantArticles, gotArticles); diff != "" {
-				t.Errorf("fetchLocalArticles() mismatch (-want +got):\n%s", diff)
+				t.Errorf("FetchLocalArticles() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -905,13 +918,13 @@ func TestUploadFresh(t *testing.T) {
 				}
 			})
 
-			got, err := b.uploadFresh(tt.localArticle)
+			got, err := b.UploadFresh(tt.localArticle)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("uploadFresh() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("UploadFresh() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("uploadFresh() got = %v, want %v", got, tt.want)
+				t.Errorf("UploadFresh() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -919,7 +932,7 @@ func TestUploadFresh(t *testing.T) {
 
 func TestStoreFilename(t *testing.T) {
 	type fields struct {
-		config *config
+		config *Config
 	}
 	tests := []struct {
 		name   string
@@ -929,26 +942,26 @@ func TestStoreFilename(t *testing.T) {
 	}{
 		{
 			name:   "default",
-			fields: fields{config: &config{Local: localConfig{FileNameMode: ""}}},
+			fields: fields{config: &Config{Local: localConfig{FileNameMode: ""}}},
 			a:      &Article{ArticleHeader: &ArticleHeader{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
 			want:   "はじめてのGo.md",
 		},
 		{
 			name:   "title",
-			fields: fields{config: &config{Local: localConfig{FileNameMode: "title"}}},
+			fields: fields{config: &Config{Local: localConfig{FileNameMode: "title"}}},
 			a:      &Article{ArticleHeader: &ArticleHeader{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
 			want:   "はじめてのGo.md",
 		},
 		{
 			name:   "id",
-			fields: fields{config: &config{Local: localConfig{FileNameMode: "id"}}},
+			fields: fields{config: &Config{Local: localConfig{FileNameMode: "id"}}},
 			a:      &Article{ArticleHeader: &ArticleHeader{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
 			want:   "1234567890abcdefghij.md",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &Broker{config: tt.fields.config}
+			b := &Broker{Config: tt.fields.config}
 			if got := b.storeFileName(tt.a); got != tt.want {
 				t.Errorf("storeFileName() = %v, want %v", got, tt.want)
 			}
@@ -964,7 +977,7 @@ func setup() (broker *Broker, mux *http.ServeMux, serverURL string, teardown fun
 
 	server := httptest.NewServer(apiHandler)
 
-	broker = newBroker(&config{
+	broker = NewBroker(&Config{
 		Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
 		Local: localConfig{
 			Dir: "./testdata/broker",

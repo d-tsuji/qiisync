@@ -1,4 +1,4 @@
-package main
+package qiisync
 
 import (
 	"bytes"
@@ -27,14 +27,15 @@ var (
 // Broker is the core structure of qiisync that handles
 // Qiita and the local filesystem with each other.
 type Broker struct {
-	*config
+	*Config
 	BaseURL *url.URL
 }
 
-func newBroker(c *config) *Broker {
+// NewBroker create a Broker.
+func NewBroker(c *Config) *Broker {
 	baseURL, _ := url.Parse(defaultBaseURL)
 	return &Broker{
-		config:  c,
+		Config:  c,
 		BaseURL: baseURL,
 	}
 }
@@ -45,7 +46,7 @@ func (b *Broker) do(req *http.Request) (*http.Response, error) {
 
 func (b *Broker) fetchRemoteArticle(a *Article) (*Article, error) {
 	if a.ID == "" {
-		return nil, errors.New("Article ID is required")
+		return nil, errors.New("article ID is required")
 	}
 	u := fmt.Sprintf("api/v2/items/%s", a.ID)
 	req, err := b.NewRequest(http.MethodGet, u, nil)
@@ -70,7 +71,8 @@ func (b *Broker) fetchRemoteArticle(a *Article) (*Article, error) {
 	return b.convertItemsArticle(&item), nil
 }
 
-func (b *Broker) fetchRemoteArticles() ([]*Article, error) {
+// FetchRemoteArticles extracts articles from Qiita.
+func (b *Broker) FetchRemoteArticles() ([]*Article, error) {
 	var articles []*Article
 	for i := 1; ; i++ {
 		aarticles, hasNext, err := b.fetchRemoteItemsPerPage(i)
@@ -116,7 +118,8 @@ func (b *Broker) fetchRemoteItemsPerPage(page int) ([]*Article, bool, error) {
 	return b.convertItemsArticles(items), defaultItemsPerPage*page < total, nil
 }
 
-func (b *Broker) fetchLocalArticles() (articles map[string]*Article, err error) {
+// FetchLocalArticles searches base_dir of local filesystem and extracts articles.
+func (b *Broker) FetchLocalArticles() (articles map[string]*Article, err error) {
 	articles = make(map[string]*Article)
 	defer func() {
 		if r := recover(); r != nil {
@@ -125,13 +128,16 @@ func (b *Broker) fetchLocalArticles() (articles map[string]*Article, err error) 
 	}()
 	fnameList := dirwalk(b.baseDir())
 	for i := range fnameList {
-		a, err := articleFromFile(fnameList[i])
+		a, err := ArticleFromFile(fnameList[i])
 		if err != nil {
 			return nil, err
 		}
 		// If ArticleHeader.ID is empty, it just indicates a new file.
 		if a.ArticleHeader.ID == "" {
 			continue
+		}
+		if ea, exists := articles[a.ArticleHeader.ID]; exists {
+			return nil, fmt.Errorf("duplicate ID in local: %s and %s", ea.FilePath, a.FilePath)
 		}
 		articles[a.ArticleHeader.ID] = a
 	}
@@ -193,16 +199,15 @@ func (b *Broker) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 	return req, nil
 }
 
-func (b *Broker) localPath(article *Article) string {
-	extension := ".md"
+func (b *Broker) localPath(a *Article) string {
 	paths := []string{b.baseDir()}
-	paths = append(paths, dateFormat(article.Item.CreatedAt), article.ID+extension)
+	paths = append(paths, dateFormat(a.Item.CreatedAt), b.storeFileName(a))
 	return filepath.Join(paths...)
 }
 
-// storeFresh compares the files in the local filesystem with the articles retrieved from Qiita and
+// StoreFresh compares the files in the local filesystem with the articles retrieved from Qiita and
 // updates the files in the local filesystem.
-func (b *Broker) storeFresh(localArticles map[string]*Article, remoteArticle *Article) (bool, error) {
+func (b *Broker) StoreFresh(localArticles map[string]*Article, remoteArticle *Article) (bool, error) {
 	var localLastModified time.Time
 	path := filepath.Join(b.baseDir(), dateFormat(remoteArticle.Item.CreatedAt), b.storeFileName(remoteArticle))
 
@@ -212,7 +217,7 @@ func (b *Broker) storeFresh(localArticles map[string]*Article, remoteArticle *Ar
 		path = a.FilePath
 	}
 	if remoteArticle.Item.UpdatedAt.After(localLastModified) {
-		logf("fresh", "remote=%s > local=%s", remoteArticle.Item.UpdatedAt, localLastModified)
+		Logf("fresh", "remote=%s > local=%s", remoteArticle.Item.UpdatedAt, localLastModified)
 		if err := b.store(path, remoteArticle); err != nil {
 			return false, err
 		}
@@ -223,7 +228,7 @@ func (b *Broker) storeFresh(localArticles map[string]*Article, remoteArticle *Ar
 }
 
 func (b *Broker) store(path string, article *Article) error {
-	logf("store", "%s", path)
+	Logf("store", "%s", path)
 
 	dir, _ := filepath.Split(path)
 	err := os.MkdirAll(dir, 0755)
@@ -273,7 +278,8 @@ func (b *Broker) convertItemsArticle(item *Item) *Article {
 	}
 }
 
-func (b *Broker) postArticle(body *PostItem) error {
+// PostArticle post the article on Qiita.
+func (b *Broker) PostArticle(body *PostItem) error {
 	req, err := b.NewRequest(http.MethodPost, "api/v2/items", body)
 	if err != nil {
 		return err
@@ -293,7 +299,7 @@ func (b *Broker) postArticle(body *PostItem) error {
 	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
 		return fmt.Errorf("json decode: %w", err)
 	}
-	logf("post", "Article ---> %s", r.URL)
+	Logf("post", "article ---> %s", r.URL)
 
 	article := &Article{
 		ArticleHeader: &ArticleHeader{
@@ -336,25 +342,27 @@ func (b *Broker) patchArticle(body *PostItem) error {
 	if resp.StatusCode != http.StatusOK {
 		return errors.New(resp.Status)
 	}
-	logf("post", "fresh Article ---> %s", body.URL)
+	Logf("post", "fresh article ---> %s", body.URL)
 	return nil
 }
 
-func (b *Broker) uploadFresh(a *Article) (bool, error) {
+// UploadFresh posts articles to Qiita.
+// If an article on Qiita is newer than the one you have locally, we will not update it.
+func (b *Broker) UploadFresh(a *Article) (bool, error) {
 	ra, err := b.fetchRemoteArticle(a)
 	if err != nil {
 		return false, err
 	}
 
 	if a.Item.UpdatedAt.After(ra.Item.UpdatedAt) == false {
-		logf("", "Article is not updated. remote=%s > local=%s", ra.Item.UpdatedAt, a.Item.UpdatedAt)
+		Logf("", "Article is not updated. remote=%s > local=%s", ra.Item.UpdatedAt, a.Item.UpdatedAt)
 		return false, nil
 	}
 
 	body := &PostItem{
 		Body:    a.Item.Body,
 		Private: a.Private,
-		Tags:    marshalTag(a.Tags),
+		Tags:    MarshalTag(a.Tags),
 		Title:   a.Title,
 		ID:      a.ID,
 		URL:     ra.Item.URL,
@@ -370,12 +378,12 @@ func (b *Broker) uploadFresh(a *Article) (bool, error) {
 func (b *Broker) storeFileName(a *Article) string {
 	var filename string
 	switch b.Local.FileNameMode {
-	case "":
-		filename = a.Title + defaultExtension
 	case "title":
 		filename = a.Title + defaultExtension
 	case "id":
 		filename = a.ID + defaultExtension
+	default:
+		filename = a.Title + defaultExtension
 	}
 	return filename
 }

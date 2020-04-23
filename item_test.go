@@ -1,4 +1,4 @@
-package main
+package qiisync
 
 import (
 	"reflect"
@@ -28,8 +28,8 @@ func TestMarshalTag(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := marshalTag(tt.args.tagString); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("marshalTag() = %v, want %v", got, tt.want)
+			if got := MarshalTag(tt.args.tagString); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MarshalTag() = %v, want %v", got, tt.want)
 			}
 		})
 	}

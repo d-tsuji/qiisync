@@ -1,4 +1,4 @@
-package main
+package qiisync
 
 import (
 	"os"
@@ -141,13 +141,13 @@ Private: true
 			f.WriteString(tt.inputData)
 			os.Chtimes(filepath.Join("temp", "test.md"), now, now)
 
-			got, err := articleFromFile(tt.args.filepath)
+			got, err := ArticleFromFile(tt.args.filepath)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("articleFromFile() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ArticleFromFile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
-				t.Errorf("articleFromFile() mismatch (-want +got):\n%s", diff)
+				t.Errorf("ArticleFromFile() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

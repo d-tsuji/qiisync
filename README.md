@@ -36,7 +36,7 @@ $ sudo dpkg -i qiisync_0.0.1_Tux-64-bit.deb
 ### Golang
 
 ```
-$ go get -u github.com/d-tsuji/qiisync
+$ go get -u github.com/d-tsuji/qiisync/cmd/qiisync
 ```
 
 ## 使い方

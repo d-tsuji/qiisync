@@ -1,4 +1,4 @@
-package main
+package qiisync
 
 import (
 	"strings"
@@ -73,6 +73,7 @@ func dateFormat(time time.Time) string {
 	return time.Format(defaultDataFormat)
 }
 
+// unmarshalTag converts a Tag to a string.
 func unmarshalTag(Tags []*Tag) string {
 	tags := make([]string, len(Tags))
 	for i := range Tags {
@@ -84,7 +85,8 @@ func unmarshalTag(Tags []*Tag) string {
 	return strings.Join(tags, ",")
 }
 
-func marshalTag(tagString string) []*Tag {
+// MarshalTag converts a string to a Tag.
+func MarshalTag(tagString string) []*Tag {
 	var tags []*Tag
 	for _, v := range strings.Split(tagString, ",") {
 		tag := strings.Split(v, ":")
