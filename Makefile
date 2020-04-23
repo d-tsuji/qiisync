@@ -29,15 +29,15 @@ clean:
 #### Local Test
 pull: clean build
 	rm -rf testdata/qiita/pull
-	$(BIN) pull
+	./$(BIN) pull
 
 pull-only: clean build
-	$(BIN) pull
+	./$(BIN) pull
 
 post: clean build
 	# $(BIN) post --path ./testdata/qiita/post/test_article.md --title first_article_2 --tag Go:1.14 --private true
-	 $(BIN) post ./testdata/qiita/post/test_article.md
+	 ./$(BIN) post ./testdata/qiita/post/test_article.md
 
 
 update: clean build
-	$(BIN) update ./testdata/qiita/post/test_article_posted.md
+	./$(BIN) update ./testdata/output/pull/20200423/a.md

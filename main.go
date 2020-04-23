@@ -24,7 +24,7 @@ func main() {
 	err := app.Run(os.Args)
 	if err != nil {
 		if err != errCommandHelp {
-			logf("error", "%+v", err)
+			logf("error", "%v", err)
 		}
 	}
 }
@@ -91,7 +91,7 @@ var commandPost = &cli.Command{
 		}
 
 		fmt.Fprintln(os.Stdout, "")
-		fmt.Fprintln(os.Stdout, `Do you make the article you post public? "true" is public, "false" is private.`)
+		fmt.Fprintln(os.Stdout, `Do you make the article you post private? "true" is private, "false" is public.`)
 		_ = sc.Scan()
 		text := sc.Text()
 		private, err := strconv.ParseBool(text)
@@ -158,7 +158,7 @@ var commandUpdate = &cli.Command{
 			return err
 		}
 
-		if a.Private {
+		if !a.Private {
 			return errors.New("Once published, an article cannot be made a private publication.\n" +
 				"\tPlease check if the Private item in the header of the article is set to false.")
 		}

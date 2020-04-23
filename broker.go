@@ -286,7 +286,7 @@ func (b *Broker) PostArticle(body *PostItem) error {
 	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
 		return fmt.Errorf("json decode: %w", err)
 	}
-	logf("post", "URL: %s", r.URL)
+	logf("post", "article ---> %s", r.URL)
 
 	article := &article{
 		ArticleHeader: &ArticleHeader{
@@ -329,7 +329,7 @@ func (b *Broker) PatchArticle(body *PostItem) error {
 	if resp.StatusCode != http.StatusOK {
 		return errors.New(resp.Status)
 	}
-	logf("post", "fresh article (title: %s)", body.Title)
+	logf("post", "fresh article ---> %s", body.URL)
 	return nil
 }
 
@@ -340,7 +340,7 @@ func (b *Broker) UploadFresh(a *article) (bool, error) {
 	}
 
 	if a.Item.UpdatedAt.After(ra.Item.UpdatedAt) == false {
-		logf("", "article is not uploaded, remote=%s > local=%s", ra.Item.UpdatedAt, a.Item.UpdatedAt)
+		logf("", "article is not updated. remote=%s > local=%s", ra.Item.UpdatedAt, a.Item.UpdatedAt)
 		return false, nil
 	}
 
@@ -350,6 +350,7 @@ func (b *Broker) UploadFresh(a *article) (bool, error) {
 		Tags:    MarshalTag(a.Tags),
 		Title:   a.Title,
 		ID:      a.ID,
+		URL:     ra.Item.URL,
 	}
 
 	if err := b.PatchArticle(body); err != nil {

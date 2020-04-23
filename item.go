@@ -36,6 +36,7 @@ type PostItem struct {
 	Tags     []*Tag `json:"tags"`
 	Title    string `json:"title"`
 	ID       string
+	URL      string
 	FilePath string
 }
 
