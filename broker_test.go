@@ -917,6 +917,45 @@ func TestUploadFresh(t *testing.T) {
 	}
 }
 
+func TestStoreFilename(t *testing.T) {
+	type fields struct {
+		config *config
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		a      *article
+		want   string
+	}{
+		{
+			name:   "default",
+			fields: fields{config: &config{Local: localConfig{FileNameMode: ""}}},
+			a:      &article{ArticleHeader: &ArticleHeader{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
+			want:   "はじめてのGo.md",
+		},
+		{
+			name:   "title",
+			fields: fields{config: &config{Local: localConfig{FileNameMode: "title"}}},
+			a:      &article{ArticleHeader: &ArticleHeader{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
+			want:   "はじめてのGo.md",
+		},
+		{
+			name:   "id",
+			fields: fields{config: &config{Local: localConfig{FileNameMode: "id"}}},
+			a:      &article{ArticleHeader: &ArticleHeader{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
+			want:   "1234567890abcdefghij.md",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &Broker{config: tt.fields.config}
+			if got := b.StoreFilename(tt.a); got != tt.want {
+				t.Errorf("StoreFilename() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func setup() (broker *Broker, mux *http.ServeMux, serverURL string, teardown func()) {
 	mux = http.NewServeMux()
 

@@ -16,7 +16,8 @@ type qiitaConfig struct {
 }
 
 type localConfig struct {
-	Dir string `toml:"base_dir"`
+	Dir          string `toml:"base_dir"`
+	FileNameMode string `toml:"filename_mode"`
 }
 
 func loadConfig(r io.Reader) (*config, error) {

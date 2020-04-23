@@ -18,17 +18,34 @@ func Test_loadConfig(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "normal_linux_relative",
+			name: "normal_linux_relative_title",
 			args: args{
 				r: strings.NewReader(`[qiita]
 api_token = "1234567890abcdefghijklmnopqrstuvwxyz1234"
 
 [local]
-base_dir = "./testdata/qiita"`),
+base_dir = "./testdata/qiita"
+filename_mode = "title"`),
 			},
 			want: &config{
 				Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
-				Local: localConfig{Dir: "./testdata/qiita"},
+				Local: localConfig{Dir: "./testdata/qiita", FileNameMode: "title"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "normal_linux_relative_id",
+			args: args{
+				r: strings.NewReader(`[qiita]
+api_token = "1234567890abcdefghijklmnopqrstuvwxyz1234"
+
+[local]
+base_dir = "./testdata/qiita"
+filename_mode = "id"`),
+			},
+			want: &config{
+				Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
+				Local: localConfig{Dir: "./testdata/qiita", FileNameMode: "id"},
 			},
 			wantErr: false,
 		},
@@ -39,11 +56,12 @@ base_dir = "./testdata/qiita"`),
 api_token = "1234567890abcdefghijklmnopqrstuvwxyz1234"
 
 [local]
-base_dir = ".\\testdata\\qiita"`),
+base_dir = ".\\testdata\\qiita"
+filename_mode = "title"`),
 			},
 			want: &config{
 				Qiita: qiitaConfig{Token: "1234567890abcdefghijklmnopqrstuvwxyz1234"},
-				Local: localConfig{Dir: `.\testdata\qiita`},
+				Local: localConfig{Dir: `.\testdata\qiita`, FileNameMode: "title"},
 			},
 			wantErr: false,
 		},

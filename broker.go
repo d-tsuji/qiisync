@@ -197,7 +197,7 @@ func (b *Broker) LocalPath(article *article) string {
 
 func (b *Broker) StoreFresh(localArticles map[string]*article, remoteArticle *article) (bool, error) {
 	var localLastModified time.Time
-	path := filepath.Join(b.BaseDir(), DateFormat(remoteArticle.Item.CreatedAt), remoteArticle.ID+defaultExtension)
+	path := filepath.Join(b.BaseDir(), DateFormat(remoteArticle.Item.CreatedAt), b.StoreFilename(remoteArticle))
 
 	a, exists := localArticles[remoteArticle.ID]
 	if exists {
@@ -303,7 +303,7 @@ func (b *Broker) PostArticle(body *PostItem) error {
 		},
 	}
 
-	path := filepath.Join(b.BaseDir(), r.CreatedAt.Format("20060102"), article.ID+defaultExtension)
+	path := filepath.Join(b.BaseDir(), r.CreatedAt.Format("20060102"), b.StoreFilename(article))
 	if err := b.Store(path, article); err != nil {
 		return err
 	}
@@ -357,4 +357,17 @@ func (b *Broker) UploadFresh(a *article) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (b *Broker) StoreFilename(a *article) string {
+	var filename string
+	switch b.Local.FileNameMode {
+	case "":
+		filename = a.Title + defaultExtension
+	case "title":
+		filename = a.Title + defaultExtension
+	case "id":
+		filename = a.ID + defaultExtension
+	}
+	return filename
 }
