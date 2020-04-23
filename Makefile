@@ -31,11 +31,13 @@ pull: clean build
 	rm -rf testdata/qiita/pull
 	$(BIN) pull
 
-post: build
-	$(BIN) post --path ./testdata/qiita/post/test_article.md --title first_article_2 --tag Go:1.14 --private true
-
 pull-only: clean build
 	$(BIN) pull
 
-upload: build
-	$(BIN) upload ./testdata/qiita/post/test_article_posted.md
+post: clean build
+	# $(BIN) post --path ./testdata/qiita/post/test_article.md --title first_article_2 --tag Go:1.14 --private true
+	 $(BIN) post ./testdata/qiita/post/test_article.md
+
+
+update: clean build
+	$(BIN) update ./testdata/qiita/post/test_article_posted.md

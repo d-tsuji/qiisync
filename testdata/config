@@ -1,5 +1,5 @@
 [qiita]
-api_token = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+api_token = "1234567890abcdefghijklmnopqrstuvwxyz1234"
 
 [local]
 base_dir = "./testdata/broker"

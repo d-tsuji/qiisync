@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/urfave/cli/v2"
 )
@@ -15,7 +18,7 @@ func main() {
 	app.Commands = []*cli.Command{
 		commandPull,
 		commandPost,
-		commandUpload,
+		commandUpdate,
 	}
 	app.Version = fmt.Sprintf("%s (%s)", version, revision)
 	err := app.Run(os.Args)
@@ -55,15 +58,9 @@ var commandPull = &cli.Command{
 var commandPost = &cli.Command{
 	Name:  "post",
 	Usage: "Post a new article to remote",
-	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "path"},
-		&cli.StringFlag{Name: "title"},
-		&cli.StringFlag{Name: "tag"},
-		&cli.BoolFlag{Name: "private"},
-	},
 	Action: func(c *cli.Context) error {
-		blog := c.Args().First()
-		if blog == "" {
+		filename := c.Args().First()
+		if filename == "" {
 			cli.ShowCommandHelp(c, "post")
 			return errCommandHelp
 		}
@@ -73,24 +70,36 @@ var commandPost = &cli.Command{
 			return err
 		}
 
-		private := c.Bool("private")
+		// Receives parameters from the stdin.
+		sc := bufio.NewScanner(os.Stdin)
 
-		title := c.String("title")
+		fmt.Fprintln(os.Stdout, "")
+		fmt.Fprintln(os.Stdout, `Please enter the "title" of the article you want to post.`)
+		_ = sc.Scan()
+		title := sc.Text()
 		if title == "" {
 			return fmt.Errorf("title is required")
 		}
 
-		tag := c.String("tag")
+		fmt.Fprintln(os.Stdout, "")
+		fmt.Fprintln(os.Stdout, `Please enter the "tag" of the article you want to post.`)
+		fmt.Fprintln(os.Stdout, `Tag is like "React,redux,TypeScript" or "Go" or "Python:3.7". To specify more than one, separate them with ",".`)
+		_ = sc.Scan()
+		tag := sc.Text()
 		if tag == "" {
-			return fmt.Errorf("one or more tag is required")
+			return fmt.Errorf("more than one tag is required")
 		}
 
-		path := c.String("path")
-		if path == "" {
-			return fmt.Errorf("path is required")
+		fmt.Fprintln(os.Stdout, "")
+		fmt.Fprintln(os.Stdout, `Do you make the article you post public? "true" is public, "false" is private.`)
+		_ = sc.Scan()
+		text := sc.Text()
+		private, err := strconv.ParseBool(text)
+		if err != nil {
+			return fmt.Errorf("input string (%s) could not be parsed into bool", text)
 		}
 
-		a, err := articleFromFile(path)
+		a, err := articleFromFile(filename)
 		if err != nil {
 			return err
 		}
@@ -116,8 +125,8 @@ func loadConfiguration() (*config, error) {
 	if err != nil {
 		return nil, err
 	}
-	fname := filepath.Join(home, ".config", "qiisync", "config")
-	f, err := os.Open(fname)
+	filename := filepath.Join(home, ".config", "qiisync", "config")
+	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -129,13 +138,13 @@ func loadConfiguration() (*config, error) {
 	return conf, nil
 }
 
-var commandUpload = &cli.Command{
-	Name:  "upload",
+var commandUpdate = &cli.Command{
+	Name:  "update",
 	Usage: "push local article to remote",
 	Action: func(c *cli.Context) error {
-		first := c.Args().First()
-		if first == "" {
-			cli.ShowCommandHelp(c, "upload")
+		filename := c.Args().First()
+		if filename == "" {
+			cli.ShowCommandHelp(c, "update")
 			return errCommandHelp
 		}
 
@@ -144,17 +153,20 @@ var commandUpload = &cli.Command{
 			return err
 		}
 
-		for _, path := range c.Args().Slice() {
-			a, err := articleFromFile(path)
-			if err != nil {
-				return err
-			}
+		a, err := articleFromFile(filename)
+		if err != nil {
+			return err
+		}
 
-			b := NewBroker(conf)
-			_, err = b.UploadFresh(a)
-			if err != nil {
-				return err
-			}
+		if a.Private {
+			return errors.New("Once published, an article cannot be made a private publication.\n" +
+				"\tPlease check if the Private item in the header of the article is set to false.")
+		}
+
+		b := NewBroker(conf)
+		_, err = b.UploadFresh(a)
+		if err != nil {
+			return err
 		}
 		return nil
 	},
