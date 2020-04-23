@@ -2,6 +2,8 @@
 
 [![Actions Status](https://github.com/d-tsuji/qiisync/workflows/test/badge.svg)](https://github.com/d-tsuji/qiisync/actions)
 
+<img src="img/logo.png" width="300">
+
 Qiisync は Qiita への記事の投稿や更新に便利な CLI クライアントです。
 
 ## インストール
