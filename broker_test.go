@@ -374,6 +374,7 @@ func TestLocalPath(t *testing.T) {
 			Private: false,
 		},
 		Item: &Item{
+			Title:     "はじめてのGo",
 			Body:      "# はじめに\n\nはじめてのGoです\n",
 			CreatedAt: time.Date(2020, 4, 22, 16, 59, 59, 0, time.UTC),
 		},
@@ -571,6 +572,80 @@ Private: false
 `
 	if got != want {
 		t.Errorf("Stored file string: %v, want %v", got, want)
+	}
+}
+
+func Test_convertItemsArticles(t *testing.T) {
+	b := &Broker{Config: &Config{Local: localConfig{FileNameMode: "title"}}}
+	items := []*Item{
+		{
+			ID:        "111",
+			Title:     "111",
+			Body:      "111",
+			CreatedAt: time.Date(2020, 4, 22, 00, 00, 00, 0, time.UTC),
+		},
+		{
+			ID:        "222",
+			Title:     "222",
+			Body:      "222",
+			CreatedAt: time.Date(2020, 4, 22, 00, 00, 00, 0, time.UTC),
+		},
+		{
+			ID:        "333",
+			Title:     "333",
+			Body:      "333",
+			CreatedAt: time.Date(2020, 4, 23, 00, 00, 00, 0, time.UTC),
+		},
+		{
+			ID:        "444",
+			Title:     "333",
+			Body:      "333",
+			CreatedAt: time.Date(2020, 4, 23, 00, 00, 00, 0, time.UTC),
+		},
+		{
+			ID:        "555",
+			Title:     "333",
+			Body:      "333",
+			CreatedAt: time.Date(2020, 4, 24, 00, 00, 00, 0, time.UTC),
+		},
+	}
+
+	got := b.convertItemsArticles(items)
+	want := []*Article{
+		{
+			ArticleHeader: &ArticleHeader{ID: "111", Title: "111"},
+			Item: &Item{ID: "111", Title: "111", Body: "111",
+				CreatedAt: time.Date(2020, 4, 22, 00, 00, 00, 0, time.UTC),
+			},
+		},
+		{
+			ArticleHeader: &ArticleHeader{ID: "222", Title: "222"},
+			Item: &Item{ID: "222", Title: "222", Body: "222",
+				CreatedAt: time.Date(2020, 4, 22, 00, 00, 00, 0, time.UTC),
+			},
+		},
+		{
+			ArticleHeader: &ArticleHeader{ID: "333", Title: "333"},
+			Item: &Item{ID: "333", Title: "333", Body: "333",
+				CreatedAt: time.Date(2020, 4, 23, 00, 00, 00, 0, time.UTC),
+			},
+		},
+		{
+			ArticleHeader: &ArticleHeader{ID: "444", Title: "333"},
+			Item: &Item{ID: "444", Title: "333_2", Body: "333",
+				CreatedAt: time.Date(2020, 4, 23, 00, 00, 00, 0, time.UTC),
+			},
+		},
+		{
+			ArticleHeader: &ArticleHeader{ID: "555", Title: "333"},
+			Item: &Item{ID: "555", Title: "333", Body: "333",
+				CreatedAt: time.Date(2020, 4, 24, 00, 00, 00, 0, time.UTC),
+			},
+		},
+	}
+
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("convertItemsArticles() mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -943,19 +1018,19 @@ func TestStoreFilename(t *testing.T) {
 		{
 			name:   "default",
 			fields: fields{config: &Config{Local: localConfig{FileNameMode: ""}}},
-			a:      &Article{ArticleHeader: &ArticleHeader{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
+			a:      &Article{Item: &Item{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
 			want:   "はじめてのGo.md",
 		},
 		{
 			name:   "title",
 			fields: fields{config: &Config{Local: localConfig{FileNameMode: "title"}}},
-			a:      &Article{ArticleHeader: &ArticleHeader{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
+			a:      &Article{Item: &Item{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
 			want:   "はじめてのGo.md",
 		},
 		{
 			name:   "id",
 			fields: fields{config: &Config{Local: localConfig{FileNameMode: "id"}}},
-			a:      &Article{ArticleHeader: &ArticleHeader{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
+			a:      &Article{Item: &Item{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
 			want:   "1234567890abcdefghij.md",
 		},
 	}

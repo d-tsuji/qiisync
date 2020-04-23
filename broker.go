@@ -259,8 +259,21 @@ func (b *Broker) store(path string, article *Article) error {
 
 func (b *Broker) convertItemsArticles(items []*Item) []*Article {
 	articles := make([]*Article, len(items))
+	fileCount := make(map[string]int, len(items))
 	for i := range items {
 		articles[i] = b.convertItemsArticle(items[i])
+
+		// If we use the title of the article in Qiita as the file name to save locally,
+		// the file name very rarely be duplicated.
+		// Therefore, if occur, the file name is set to a sequential number to avoid it.
+		if b.isFileNameModeTitle() {
+			path := filepath.Join(dateFormat(items[i].CreatedAt), items[i].Title)
+			cnt, exists := fileCount[path]
+			if exists {
+				articles[i].Item.Title = fmt.Sprintf("%s_%d", articles[i].Item.Title, cnt+1)
+			}
+			fileCount[path] = cnt + 1
+		}
 	}
 	return articles
 }
@@ -379,11 +392,15 @@ func (b *Broker) storeFileName(a *Article) string {
 	var filename string
 	switch b.Local.FileNameMode {
 	case "title":
-		filename = a.Title + defaultExtension
+		filename = a.Item.Title + defaultExtension
 	case "id":
-		filename = a.ID + defaultExtension
+		filename = a.Item.ID + defaultExtension
 	default:
-		filename = a.Title + defaultExtension
+		filename = a.Item.Title + defaultExtension
 	}
 	return filename
+}
+
+func (b *Broker) isFileNameModeTitle() bool {
+	return b.Local.FileNameMode != "id"
 }
