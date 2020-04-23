@@ -140,7 +140,7 @@ func loadConfiguration() (*config, error) {
 
 var commandUpdate = &cli.Command{
 	Name:  "update",
-	Usage: "push local Article to remote",
+	Usage: "Push local Article to remote",
 	Action: func(c *cli.Context) error {
 		filename := c.Args().First()
 		if filename == "" {

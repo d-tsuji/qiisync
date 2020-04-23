@@ -6,8 +6,34 @@ Qiisync は Qiita への記事の投稿や更新に便利な CLI クライアン
 
 ## インストール
 
-```bash
-# TODO: バイナリを提供する
+### Binary
+
+Binary が必要な場合は [Releases](https://github.com/d-tsuji/qiisync/releases) ページから欲しいバージョンの zip ファイルをダウンロードしてください。
+zip ファイルを解凍し、パスが通る場所に Binary を配置します。
+
+### macOS
+
+```
+$ brew tap d-tsuji/qiisync
+$ brew install qiisync
+```
+
+### CentOS
+
+```
+$ sudo rpm -ivh https://github.com/d-tsuji/qiisync/releases/download/v0.0.1/qiisync_0.0.1_Tux-64-bit.rpm
+```
+
+### Debian, Ubuntu
+
+```
+$ wget https://github.com/d-tsuji/qiisync/releases/download/v0.0.1/qiisync_0.0.1_Tux-64-bit.deb
+$ sudo dpkg -i qiisync_0.0.1_Tux-64-bit.deb
+```
+
+### Golang
+
+```
 $ go get -u github.com/d-tsuji/qiisync
 ```
 
@@ -24,23 +50,23 @@ Qiisync を使うためには Qiita の API トークンが必要です。[こ�
 api_token = "1234567890abcdefghijklmnopqrstuvwxyz1234"
 
 [local]
-base_dir = "./testdata/broker"
+base_dir = "./testdata/output"
 filename_mode = "title"
 ```
 
-各項目の説明です。
+設定ファイルのおける各項目の説明です。
 
 #### [qiita]
 
-| #   | 項目        | 説明                              | デフォルト値 |
-| --- | ----------- | --------------------------------- | ------------ |
-| 1   | `api_token` | Qiita の API トークンを設定します | <必須>       |
+| #   | 項目        | 説明                                | デフォルト値 |
+| --- | ----------- | ----------------------------------- | ------------ |
+| 1   | `api_token` | Qiita の API トークンを設定します。 | <必須>       |
 
 #### [local]
 
 | #   | 項目            | 説明                                                                                                                                                                                               | デフォルト値 |
 | --- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| 1   | `base_dir`      | 記事を格納するパスのルートです                                                                                                                                                                     | <必須>       |
+| 1   | `base_dir`      | 記事を格納するパスのルートです。                                                                                                                                                                   | <必須>       |
 | 2   | `filename_mode` | 記事をローカルに取得する際のファイル名です。"title" か "id" を指定できます。<br>"title" はファイル名に、Qiita の記事のファイル名を、"id" の場合は記事のファイル名に Qiita の記事の ID を用います。 | "title"      |
 
 ### 記事の操作
@@ -66,11 +92,13 @@ $ qiisync pull
 $ ./qiisync pull
      fresh remote=2020-04-14 11:26:38 +0900 JST > local=0001-01-01 00:00:00 +0000 UTC
      store /mnt/c/Users/dramt/go/src/github.com/d-tsuji/qiisync/testdata/output/pull/20200413/改行コードって難しいっ.md
+     ...
      fresh remote=2019-12-05 07:01:29 +0900 JST > local=0001-01-01 00:00:00 +0000 UTC
      store /mnt/c/Users/dramt/go/src/github.com/d-tsuji/qiisync/testdata/output/pull/20191124/GoでシンプルなHTTPサーバを自作する.md
      fresh remote=2019-12-10 07:00:25 +0900 JST > local=0001-01-01 00:00:00 +0000 UTC
      store /mnt/c/Users/dramt/go/src/github.com/d-tsuji/qiisync/testdata/output/pull/20191118/GoのFormatterの書式における'+'フラグと独自実装.md
      fresh remote=2019-11-20 10:33:03 +0900 JST > local=0001-01-01 00:00:00 +0000 UTC
+     ...
 ```
 
 `filename_mode` で `"id"` を指定しているとダウンロードしたときのファイル名は以下のようになります。
