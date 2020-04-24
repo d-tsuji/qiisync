@@ -116,6 +116,19 @@ func Test_fetchRemoteArticle(t *testing.T) {
 	}
 }
 
+func Test_fetchRemoteArticleNoID(t *testing.T) {
+	broker, _, _, teardown := setup()
+	defer teardown()
+
+	_, err := broker.fetchRemoteArticle(&Article{
+		ArticleHeader: &ArticleHeader{ID: ""},
+	})
+	if err == nil {
+		t.Errorf("expected error occured if no article ID")
+		return
+	}
+}
+
 func Test_fetchRemoteArticles(t *testing.T) {
 	broker, mux, _, teardown := setup()
 	t.Cleanup(func() {
@@ -810,6 +823,17 @@ func TestPatchArticle(t *testing.T) {
 	})
 	if err != nil {
 		t.Errorf("patchArticle(): %v", err)
+		return
+	}
+}
+
+func TestPatchArticleNoID(t *testing.T) {
+	broker, _, _, teardown := setup()
+	defer teardown()
+
+	err := broker.patchArticle(&PostItem{ID: ""})
+	if err == nil {
+		t.Errorf("expected error occured if no article ID")
 		return
 	}
 }
