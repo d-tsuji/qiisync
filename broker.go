@@ -317,9 +317,14 @@ func (b *Broker) PostArticle(body *PostItem) error {
 			Private: r.Private,
 		},
 		Item: &Item{
+			ID:        r.ID,
+			Title:     r.Title,
+			Tags:      r.Tags,
 			Body:      r.Body,
+			User:      r.User,
 			CreatedAt: r.CreatedAt,
 			UpdatedAt: r.UpdatedAt,
+			Private:   r.Private,
 		},
 	}
 
