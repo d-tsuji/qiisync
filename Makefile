@@ -21,7 +21,7 @@ test: deps
 	go test -v -count=1 ./...
 
 test-cover: deps
-	go test -v -cover -coverprofile=c.out
+	go test -v -count=1 ./... -cover -coverprofile=c.out
 	go tool cover -html=c.out -o coverage.html
 
 lint: devel-deps
