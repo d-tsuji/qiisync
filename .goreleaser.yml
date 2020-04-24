@@ -11,7 +11,7 @@ builds:
     goarch:
       - amd64
       - 386
-    main: .
+    main: ./cmd/qiisync
     binary: qiisync
     ldflags:
       - -s -w
