@@ -240,19 +240,13 @@ func (b *Broker) store(path string, article *Article) error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	fullContext, err := article.fullContent()
 	if err != nil {
 		return err
 	}
-	_, err = f.WriteString(fullContext)
-	if err != nil {
-		return err
-	}
-
-	if err := f.Close(); err != nil {
-		return err
-	}
+	f.WriteString(fullContext)
 
 	return os.Chtimes(path, article.Item.UpdatedAt, article.Item.UpdatedAt)
 }

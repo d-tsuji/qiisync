@@ -117,6 +117,35 @@ Private: true
 			},
 			wantErr: false,
 		},
+		{
+			name: "invalid_yaml",
+			inputData: `---
+ID: 1234567890abcdefghij
+Title: テストTitle
+Tags: Test:v0.0.1
+Author: d-tsuji
+Private: true
+
+# はじめに
+
+はじめてのQiitaです
+`,
+			args:    args{filepath.Join("temp", "test.md")},
+			wantErr: true,
+		},
+		{
+			name: "invalid_yaml_format",
+			inputData: `---
+- ID: 1234567890abcdefghij
+---
+
+# はじめに
+
+はじめてのQiitaです
+`,
+			args:    args{filepath.Join("temp", "test.md")},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

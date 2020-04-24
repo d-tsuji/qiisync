@@ -1044,6 +1044,42 @@ func TestStoreFilename(t *testing.T) {
 	}
 }
 
+func Test_dirwalk(t *testing.T) {
+	baseDir := filepath.Join("testdata", "walk")
+	os.MkdirAll(baseDir, 0755)
+
+	tempDir, err := ioutil.TempDir(baseDir, "temp")
+	if err != nil {
+		t.Errorf("create tempDir: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			t.Errorf("remove tempDir: %v", err)
+		}
+	})
+
+	os.MkdirAll(filepath.Join(tempDir, "dir_b"), 0777)
+	os.MkdirAll(filepath.Join(tempDir, "dir_c"), 0777)
+
+	f, _ := os.Create(filepath.Join(tempDir, "file_a"))
+	f.Close()
+	f, _ = os.Create(filepath.Join(tempDir, "dir_b", "file_b"))
+	f.Close()
+	f, _ = os.Create(filepath.Join(tempDir, "dir_c", "file_c"))
+	f.Close()
+
+	got := dirwalk(baseDir)
+	want := []string{
+		filepath.Join(tempDir, "dir_b", "file_b"),
+		filepath.Join(tempDir, "dir_c", "file_c"),
+		filepath.Join(tempDir, "file_a"),
+	}
+
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("dirwalk(%s) mismatch (-want +got):\n%s", tempDir, diff)
+	}
+}
+
 func setup() (broker *Broker, mux *http.ServeMux, serverURL string, teardown func()) {
 	mux = http.NewServeMux()
 

@@ -115,6 +115,13 @@ filename_mode = "title"`),
 			},
 			wantErr: false,
 		},
+		{
+			name: "invalid_linux_relative_title",
+			args: args{
+				r: strings.NewReader(`invalid`),
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
