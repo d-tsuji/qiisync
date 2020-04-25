@@ -20,3 +20,7 @@
 # Executable Binary
 qiisync
 qiisync.exe
+
+# Go test coverage
+c.out
+coverage.html

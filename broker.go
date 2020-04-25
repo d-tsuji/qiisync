@@ -121,12 +121,10 @@ func (b *Broker) fetchRemoteItemsPerPage(page int) ([]*Article, bool, error) {
 // FetchLocalArticles searches base_dir of local filesystem and extracts articles.
 func (b *Broker) FetchLocalArticles() (articles map[string]*Article, err error) {
 	articles = make(map[string]*Article)
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("recoverd when dirwalk(%s): %v", b.baseDir(), r)
-		}
-	}()
-	fnameList := dirwalk(b.baseDir())
+	fnameList, err := dirwalk(b.baseDir())
+	if err != nil {
+		return nil, fmt.Errorf("dirwalk %s: %w", fnameList, err)
+	}
 	for i := range fnameList {
 		a, err := ArticleFromFile(fnameList[i])
 		if err != nil {
@@ -144,26 +142,26 @@ func (b *Broker) FetchLocalArticles() (articles map[string]*Article, err error) 
 	return articles, nil
 }
 
-func dirwalk(dir string) []string {
-	err := os.MkdirAll(dir, 0755)
-	if err != nil {
-		panic(err)
-	}
+func dirwalk(dir string) ([]string, error) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("read dir: %w", err)
 	}
 
 	var paths []string
 	for _, file := range files {
 		if file.IsDir() {
-			paths = append(paths, dirwalk(filepath.Join(dir, file.Name()))...)
+			p, err := dirwalk(filepath.Join(dir, file.Name()))
+			if err != nil {
+				return nil, fmt.Errorf("dirwalk %s: %w", filepath.Join(dir, file.Name()), err)
+			}
+			paths = append(paths, p...)
 			continue
 		}
 		paths = append(paths, filepath.Join(dir, file.Name()))
 	}
 
-	return paths
+	return paths, nil
 }
 
 // NewRequest is a testable NewRequest that wraps http.NewRequest.
