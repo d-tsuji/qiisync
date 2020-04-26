@@ -838,6 +838,34 @@ func TestPatchArticleNoID(t *testing.T) {
 	}
 }
 
+func TestPatchInvalidResponse(t *testing.T) {
+	b, mux, _, teardown := setup()
+	t.Cleanup(func() { teardown() })
+
+	mux.HandleFunc("/api/v2/items/c686397e4a0f4f11683d", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "PATCH")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, `[{}]`)
+	})
+
+	err := b.patchArticle(&PostItem{
+		Body:    "# Example",
+		Private: false,
+		Tags: []*Tag{
+			{
+				Name:     "Ruby",
+				Versions: []string{"0.0.1"},
+			},
+		},
+		Title: "Example title",
+		ID:    "c686397e4a0f4f11683d",
+	})
+	if err == nil {
+		t.Errorf("expected error occured if cannot decode json")
+		return
+	}
+}
+
 func Test_fetchLocalArticles(t *testing.T) {
 	updateAt := time.Date(2020, 4, 22, 16, 59, 59, 0, time.UTC)
 
@@ -958,6 +986,24 @@ func TestUploadFresh(t *testing.T) {
 			},
 			want:    false,
 			wantErr: false,
+		},
+		{
+			name: "cannot_private",
+			localArticle: &Article{
+				ArticleHeader: &ArticleHeader{
+					ID:      "c686397e4a0f4f11683d",
+					Title:   "Update title",
+					Tags:    "Go:1.14",
+					Author:  "d-tsuji",
+					Private: true,
+				},
+				Item: &Item{
+					Body:      "# Update Example",
+					UpdatedAt: time.Date(2020, 4, 23, 05, 41, 36, 0, time.UTC),
+				},
+			},
+			want:    false,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {

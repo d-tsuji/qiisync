@@ -352,7 +352,13 @@ func (b *Broker) patchArticle(body *PostItem) error {
 	if resp.StatusCode != http.StatusOK {
 		return errors.New(resp.Status)
 	}
-	Logf("post", "fresh article ---> %s", body.URL)
+
+	var item Item
+	if err := json.NewDecoder(resp.Body).Decode(&item); err != nil {
+		return err
+	}
+
+	Logf("post", "fresh article ---> %s", item.URL)
 	return nil
 }
 
@@ -365,8 +371,12 @@ func (b *Broker) UploadFresh(a *Article) (bool, error) {
 	}
 
 	if a.Item.UpdatedAt.After(ra.Item.UpdatedAt) == false {
-		Logf("", "Article is not updated. remote=%s > local=%s", ra.Item.UpdatedAt, a.Item.UpdatedAt)
+		Logf("", "article is not updated. remote=%s > local=%s", ra.Item.UpdatedAt, a.Item.UpdatedAt)
 		return false, nil
+	}
+
+	if a.Private && !ra.Private {
+		return false, errors.New("once an article has been published, it cannot be privately published")
 	}
 
 	body := &PostItem{

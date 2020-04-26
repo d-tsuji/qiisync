@@ -29,8 +29,6 @@ nfpms:
     formats:
       - deb
       - rpm
-    dependencies:
-      - rpm
     vendor: "d-tsuji"
     homepage: "https://github.com/d-tsuji/qiisync"
     maintainer: "Tsuji Daishiro"
