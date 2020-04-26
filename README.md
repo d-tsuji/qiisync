@@ -52,6 +52,8 @@ Qiisync では以下の 3 つの操作をサポートしています。
 $ qiisync pull
 ```
 
+[![asciicast](https://asciinema.org/a/zyIpxyuZyyeQ25pV4i1Tx7nxL.svg)](https://asciinema.org/a/zyIpxyuZyyeQ25pV4i1Tx7nxL)
+
 設定完了後、上記のコマンドで Qiita の記事を `base_dir` で指定したディレクトリ配下にダウンロードできます。
 
 `base_dir` を `"./testdata/output/pull"` に設定して `qiisync pull` を実行したときは以下のようにダウンロードされます。
@@ -112,6 +114,8 @@ Private: false
 $ qiisync update <filepath>
 ```
 
+[![asciicast](https://asciinema.org/a/1JiRSyOYGqiSbAFYGpZYa2iWq.svg)](https://asciinema.org/a/1JiRSyOYGqiSbAFYGpZYa2iWq)
+
 `qiisync update` を実行したときの実行例を記載します。`qiisync pull` でローカルにダウンロードしたメタデータが付与されているファイルを指定します。
 
 ```
@@ -131,6 +135,8 @@ $ qiisync update ./testdata/output/pull/20200423/はじめてのGo.md
 ```
 $ qiisync post <filepath>
 ```
+
+[![asciicast](https://asciinema.org/a/3Fup9AHhKtfmasgGovfVWjiBb.svg)](https://asciinema.org/a/3Fup9AHhKtfmasgGovfVWjiBb)
 
 まだ Qiita に存在しない記事を投稿する場合は `qiisync post` で記事を投稿します。引数に任意のファイルパスを指定します。
 投稿に成功するとメタデータが付与されたファイルが `base_dir` で指定したディレクトリ配下にダウンロードされます。以降はダウンロードされたファイルを更新し、`qiisync update` を実行することで Qiita に変更内容を反映することができます。
