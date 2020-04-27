@@ -143,6 +143,10 @@ func (b *Broker) FetchLocalArticles() (articles map[string]*Article, err error) 
 }
 
 func dirwalk(dir string) ([]string, error) {
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		return nil, fmt.Errorf("make dir: %w", err)
+	}
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("read dir: %w", err)

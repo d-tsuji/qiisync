@@ -909,12 +909,6 @@ func Test_fetchLocalArticles(t *testing.T) {
 				Local: localConfig{Dir: filepath.Join("testdata", "duplicate")}}},
 			wantErr: true,
 		},
-		{
-			name: "dummy_dir",
-			fields: fields{config: &Config{
-				Local: localConfig{Dir: "dummy"}}},
-			wantErr: true,
-		},
 	}
 
 	if err := os.Chtimes(filepath.Join("testdata", "article", "20_test_article_posted.md"), updateAt, updateAt); err != nil {
@@ -1156,13 +1150,6 @@ func Test_dirwalk(t *testing.T) {
 
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("dirwalk(%s) mismatch (-want +got):\n%s", tempDir, diff)
-	}
-}
-
-func Test_dirwalk_dummyDir(t *testing.T) {
-	_, err := dirwalk("dummy")
-	if err == nil {
-		t.Errorf("expect to occur error but nothing: %v", err)
 	}
 }
 
