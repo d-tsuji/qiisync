@@ -176,14 +176,14 @@ $ brew install qiisync
 ### CentOS
 
 ```
-$ sudo rpm -ivh https://github.com/d-tsuji/qiisync/releases/download/v0.0.4/qiisync_0.0.4_Tux-64-bit.rpm
+$ sudo rpm -ivh https://github.com/d-tsuji/qiisync/releases/download/v0.0.5/qiisync_0.0.5_Tux-64-bit.rpm
 ```
 
 ### Debian, Ubuntu
 
 ```
-$ wget https://github.com/d-tsuji/qiisync/releases/download/v0.0.4/qiisync_0.0.4_Tux-64-bit.deb
-$ sudo dpkg -i qiisync_0.0.4_Tux-64-bit.deb
+$ wget https://github.com/d-tsuji/qiisync/releases/download/v0.0.5/qiisync_0.0.5_Tux-64-bit.deb
+$ sudo dpkg -i qiisync_0.0.5_Tux-64-bit.deb
 ```
 
 ### go get
