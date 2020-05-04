@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +23,8 @@ var (
 	defaultBaseURL      = "https://qiita.com/"
 	defaultItemsPerPage = 20
 	defaultExtension    = ".md"
+
+	invalidCharacterReg = regexp.MustCompile(`[\\\/?:*"<>|]`)
 )
 
 // Broker is the core structure of qiisync that handles
@@ -403,11 +406,11 @@ func (b *Broker) storeFileName(a *Article) string {
 	var filename string
 	switch b.Local.FileNameMode {
 	case "title":
-		filename = a.Item.Title + defaultExtension
+		filename = invalidCharacterReg.ReplaceAllString(a.Item.Title, "_") + defaultExtension
 	case "id":
 		filename = a.Item.ID + defaultExtension
 	default:
-		filename = a.Item.Title + defaultExtension
+		filename = invalidCharacterReg.ReplaceAllString(a.Item.Title, "_") + defaultExtension
 	}
 	return filename
 }

@@ -1103,6 +1103,12 @@ func TestStoreFilename(t *testing.T) {
 			a:      &Article{Item: &Item{ID: "1234567890abcdefghij", Title: "はじめてのGo"}},
 			want:   "1234567890abcdefghij.md",
 		},
+		{
+			name:   "title_escape",
+			fields: fields{config: &Config{Local: localConfig{FileNameMode: "title"}}},
+			a:      &Article{Item: &Item{ID: "1234567890abcdefghij", Title: `\/?:*"<>|`}},
+			want:   `_________.md`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
