@@ -196,6 +196,7 @@ $ go get -u github.com/d-tsuji/qiisync/cmd/qiisync
 
 #### Winodws 
 
+- QiitaのAPIがファイルアップロードに対応していないため、記事に埋め込んだローカルファイルのアップロードはできません。
 - Windows 環境でも動作しますが、今のところ Qiisync が Windows の改行コード CRLF(`\r\n`) をサポートしていないため、`qiisync post` でファイルを投稿する際のファイルの改行コードは LF(`\r`) である必要があります。
 - また、`~/.config/qiisync/config` に記述する `base_dir` も `"testdata\\output\\pull\\"` といったように `\` をエスケープする必要があります。
 
