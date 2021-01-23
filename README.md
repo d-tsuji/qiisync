@@ -163,30 +163,15 @@ filename_mode = "title"
 
 ### Binary
 
-Binary が必要な場合は [Releases](https://github.com/d-tsuji/qiisync/releases) ページから欲しいバージョンの zip ファイルをダウンロードしてください。
-zip ファイルを解凍し、パスが通る場所に Binary を配置します。
-
-### macOS
+Binary が必要な場合は以下のコマンドでインストールできます。
 
 ```
-$ brew tap d-tsuji/qiisync
-$ brew install qiisync
-```
-
-### CentOS
-
-```
-$ sudo rpm -ivh https://github.com/d-tsuji/qiisync/releases/download/v0.0.5/qiisync_0.0.5_Tux-64-bit.rpm
-```
-
-### Debian, Ubuntu
-
-```
-$ wget https://github.com/d-tsuji/qiisync/releases/download/v0.0.5/qiisync_0.0.5_Tux-64-bit.deb
-$ sudo dpkg -i qiisync_0.0.5_Tux-64-bit.deb
+$ curl -sfL https://raw.githubusercontent.com/d-tsuji/qiisync/master/install.sh | sudo sh -s -- -b /usr/local/bin
 ```
 
 ### go get
+
+Goのソースからインストールする場合は以下になります。
 
 ```
 $ go get -u github.com/d-tsuji/qiisync/cmd/qiisync
@@ -194,7 +179,7 @@ $ go get -u github.com/d-tsuji/qiisync/cmd/qiisync
 
 ### 制限事項
 
-#### Winodws 
+#### Windows 
 
 - QiitaのAPIがファイルアップロードに対応していないため、記事に埋め込んだローカルファイルのアップロードはできません。
 - Windows 環境でも動作しますが、今のところ Qiisync が Windows の改行コード CRLF(`\r\n`) をサポートしていないため、`qiisync post` でファイルを投稿する際のファイルの改行コードは LF(`\r`) である必要があります。
