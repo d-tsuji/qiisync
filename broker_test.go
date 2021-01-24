@@ -124,7 +124,7 @@ func Test_fetchRemoteArticleNoID(t *testing.T) {
 		ArticleHeader: &ArticleHeader{ID: ""},
 	})
 	if err == nil {
-		t.Errorf("expected error occured if no article ID")
+		t.Errorf("expected error occurred if no article ID")
 		return
 	}
 }
@@ -833,7 +833,7 @@ func TestPatchArticleNoID(t *testing.T) {
 
 	err := broker.patchArticle(&PostItem{ID: ""})
 	if err == nil {
-		t.Errorf("expected error occured if no article ID")
+		t.Errorf("expected error occurred if no article ID")
 		return
 	}
 }
@@ -861,7 +861,7 @@ func TestPatchInvalidResponse(t *testing.T) {
 		ID:    "c686397e4a0f4f11683d",
 	})
 	if err == nil {
-		t.Errorf("expected error occured if cannot decode json")
+		t.Errorf("expected error occurred if cannot decode json")
 		return
 	}
 }
