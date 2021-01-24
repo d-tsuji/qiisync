@@ -19,7 +19,7 @@ func main() {
 		commandPost,
 		commandUpdate,
 	}
-	app.Version = fmt.Sprintf("%s", qiisync.Version)
+	app.Version = qiisync.Version
 	err := app.Run(os.Args)
 	if err != nil {
 		if err != errCommandHelp {
@@ -60,7 +60,7 @@ var commandPost = &cli.Command{
 	Action: func(c *cli.Context) error {
 		filename := c.Args().First()
 		if filename == "" {
-			cli.ShowCommandHelp(c, "post")
+			_ = cli.ShowCommandHelp(c, "post")
 			return errCommandHelp
 		}
 
@@ -142,7 +142,7 @@ var commandUpdate = &cli.Command{
 	Action: func(c *cli.Context) error {
 		filename := c.Args().First()
 		if filename == "" {
-			cli.ShowCommandHelp(c, "update")
+			_ = cli.ShowCommandHelp(c, "update")
 			return errCommandHelp
 		}
 

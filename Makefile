@@ -3,6 +3,7 @@
 BIN := qiisync
 BUILD_LDFLAGS := "-s -w"
 GOBIN ?= $(shell go env GOPATH)/bin
+GOLANGCILINT_VERSION := 1.35.2
 export GO111MODULE=on
 
 repo_name := d-tsuji/qiisync
@@ -14,8 +15,11 @@ deps:
 	go mod tidy
 
 devel-deps: deps
-	GO111MODULE=off go get -u \
-	  golang.org/x/lint/golint
+	sh -c '\
+      tmpdir=$$(mktemp -d); \
+      cd $$tmpdir; \
+      go get github.com/golangci/golangci-lint/cmd/golangci-lint@v${GOLANGCILINT_VERSION}; \
+      rm -rf $$tmpdir'
 
 build:
 	go build -ldflags=$(BUILD_LDFLAGS) -o $(BIN) ./cmd/qiisync
@@ -29,7 +33,7 @@ test-cover: deps
 
 lint: devel-deps
 	go vet ./...
-	$(GOBIN)/golint -set_exit_status ./...
+	golangci-lint run --config .golangci.yml
 
 clean:
 	rm -rf $(BIN)

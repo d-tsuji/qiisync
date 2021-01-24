@@ -251,7 +251,7 @@ func (b *Broker) store(path string, article *Article) error {
 	if err != nil {
 		return err
 	}
-	f.WriteString(fullContext)
+	_, _ = f.WriteString(fullContext)
 
 	return os.Chtimes(path, article.Item.UpdatedAt, article.Item.UpdatedAt)
 }
@@ -377,7 +377,7 @@ func (b *Broker) UploadFresh(a *Article) (bool, error) {
 		return false, err
 	}
 
-	if a.Item.UpdatedAt.After(ra.Item.UpdatedAt) == false {
+	if !a.Item.UpdatedAt.After(ra.Item.UpdatedAt) {
 		Logf("", "article is not updated. remote=%s > local=%s", ra.Item.UpdatedAt, a.Item.UpdatedAt)
 		return false, nil
 	}
